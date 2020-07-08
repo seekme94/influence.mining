@@ -1,0 +1,23 @@
+Package: influence.mining
+Type: Package
+Title: Provides various methods for influence mining on Graphs
+Version: 0.2.0
+Authors@R: person(given = "Owais",
+           family = "Hussain",
+           role = c("aut", "cre"),
+           email = "owaishussain@outlook.com",
+           comment = c(ORCID = "0000-0002-5449-1867", Researchgate = "https://www.researchgate.net/profile/Owais_Hussain"))
+Maintainer: Owais Hussain <owaishussain@outlook.com>
+Description: This package uses igraph library to provide influence mining features on graph data.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.0
+Depends:
+    R (>= 3.1.0),
+    igraph (>= 1.2.1)
+Imports:
+    stats,e1071,caret,arules,uuid,jsonlite,graphics,utils,logging,iterpc,foreach,snow,doSNOW
+Suggests:
+    knitr,devtools,roxygen2,testthat,RMySQL
