@@ -23,9 +23,9 @@ Returns the centrality values of nodes in a graph using given method
 \examples{
 {
 graph <- erdos.renyi.game(500, 0.05)
-get_centrality_scores(graph, centrality_method=c"DEGREE")
-get_centrality_scores(graph, centrality_method=c"BETWEENNESS")
-get_centrality_scores(graph, centrality_method=c"CLOSENESS")
-get_centrality_scores(graph, centrality_method=c"EIGENVECTOR")
+get_centrality_scores(graph, centrality_method="DEGREE")
+get_centrality_scores(graph, centrality_method="BETWEENNESS")
+get_centrality_scores(graph, centrality_method="CLOSENESS")
+get_centrality_scores(graph, centrality_method="EIGENVECTOR")
 }
 }

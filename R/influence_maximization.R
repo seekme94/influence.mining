@@ -574,10 +574,10 @@ simulate_lt <- function(graph, active, threshold=0.5) {
 #' @import igraph
 #' @examples {
 #' graph <- erdos.renyi.game(500, 0.05)
-#' get_centrality_scores(graph, centrality_method=c"DEGREE")
-#' get_centrality_scores(graph, centrality_method=c"BETWEENNESS")
-#' get_centrality_scores(graph, centrality_method=c"CLOSENESS")
-#' get_centrality_scores(graph, centrality_method=c"EIGENVECTOR")
+#' get_centrality_scores(graph, centrality_method="DEGREE")
+#' get_centrality_scores(graph, centrality_method="BETWEENNESS")
+#' get_centrality_scores(graph, centrality_method="CLOSENESS")
+#' get_centrality_scores(graph, centrality_method="EIGENVECTOR")
 #' }
 #' @export
 get_centrality_scores <- function(graph, centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR")) {

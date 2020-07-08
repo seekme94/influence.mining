@@ -33,210 +33,6 @@ graph_summary <- function(graph, plot=FALSE) {
   o
 }
 
-#' @title Calculates several traits from given graph and returns as data frame
-#' @name get_graph_traits
-#' @param graph is the igraph object
-#' @param normalize uses pnorm function to normalize the traits. Default is FALSE
-#' @param node_traits is the vector of several node metrices
-#' @param graph_traits is the vector of several graph metrices
-#' @param verbose prints the progress log on console when TRUE. Default is FALSE
-#' @return data frame containing graph and its traits
-#' @import igraph
-#' @export
-get_graph_traits <- function(graph, normalize=FALSE,
-  node_traits=c("degree", "betweenness", "closeness", "eigenvalue", "eccentricity", "coreness", "pagerank", "ci", "a-degree", "a-betweenness", "a-closeness", "a-eigenvalue", "a-coreness", "a-pagerank", "a-ci"),
-  graph_traits=c("graph_size", "graph_edges", "graph_avg_degree", "graph_max_degree", "graph_apl", "graph_clust_coef", "graph_diameter", "graph_density", "graph_assortativity", "graph_avg_distance", "graph_triads", "graph_girth"), verbose=FALSE) {
-
-  # First, fetch all the node traits
-  if (verbose) {
-    print("Computing node influence traits...")
-  }
-  data <- get_node_influence_traits(graph, normalize=normalize, traits=node_traits, verbose=verbose)
-  if ("graph_size" %in% graph_traits) {
-    data$graph_size <- vcount(graph)
-  }
-  if ("graph_edges" %in% graph_traits) {
-    data$graph_edges <- ecount(graph)
-  }
-  if ("graph_avg_degree" %in% graph_traits) {
-    data$graph_avg_degree <- mean(data$degree)
-  }
-  if ("graph_max_degree" %in% graph_traits) {
-    data$graph_max_degree <- max(data$degree)
-  }
-  if ("graph_apl" %in% graph_traits) {
-    if (verbose) {
-      print("Computing average path length...")
-    }
-    data$graph_apl <- average.path.length(graph)
-  }
-  if ("graph_clust_coef" %in% graph_traits) {
-    if (verbose) {
-      print("Computing clustering coefficient...")
-    }
-    data$graph_clust_coef <- transitivity(graph)
-  }
-  if ("graph_diameter" %in% graph_traits) {
-    if (verbose) {
-      print("Computing diameter...")
-    }
-    data$graph_diameter <- diameter(graph)
-  }
-  if ("graph_density" %in% graph_traits) {
-    if (verbose) {
-      print("Computing density...")
-    }
-    data$graph_density <- graph.density(graph)
-  }
-  if ("graph_assortativity" %in% graph_traits) {
-    if (verbose) {
-      print("Computing assortativity...")
-    }
-    data$graph_assortativity <- assortativity.degree(graph)
-  }
-  if ("graph_avg_distance" %in% graph_traits) {
-    if (verbose) {
-      print("Computing average distance...")
-    }
-    data$graph_avg_distance <- mean_distance(graph)
-  }
-  if ("graph_triads" %in% graph_traits) {
-    if (verbose) {
-      print("Computing triads...")
-    }
-    data$graph_triads <- length(triangles(graph))
-  }
-  if ("graph_girth" %in% graph_traits) {
-    if (verbose) {
-      print("Computing girth...")
-    }
-    data$graph_girth <- girth(graph)$girth
-  }
-  data
-}
-
-#' @title Calculates several node influence traits from given graph and returns as a list
-#' @name get_node_influence_traits
-#' @param graph is the igraph object
-#' @param normalize uses pnorm function to normalize the traits. Default is FALSE
-#' @param traits is the vector of several influential metrices (traits). Available metrices are: betweenness, closeness, eigenvalue, coreness, pagerank, ci, a-degree, a-betweenness, a-closeness, a-eigenvalue, a-coreness, a-pagerank, a-ci (a-xxx representing adaptive ranking variant)
-#' @param verbose prints the progress log on console when TRUE. Default is FALSE
-#' @return data frame containing graph and its traits
-#' @import igraph
-#' @export
-get_node_influence_traits <- function(graph, normalize=FALSE, traits=c("betweenness", "closeness", "eigenvalue", "coreness", "pagerank", "ci", "a-degree", "a-betweenness", "a-closeness", "a-eigenvalue", "a-coreness", "a-pagerank", "a-ci"), verbose=FALSE) {
-  data <- NULL
-  data$name <- 1:vcount(graph) - 1
-  data$degree <- degree(graph)
-  if ("betweenness" %in% traits) {
-    if (verbose) {
-      print("Computing Betweenness centrality...")
-    }
-    data$betweenness <- betweenness(graph)
-    if (normalize) {
-      data$betweenness <- normalize_trait(data$betweenness)
-    }
-  }
-  if ("closeness" %in% traits) {
-    if (verbose) {
-      print("Computing Closeness centrality...")
-    }
-    data$closeness <- closeness(graph)
-    if (normalize) {
-      data$closeness <- normalize_trait(data$closeness)
-    }
-  }
-  if ("eigenvalue" %in% traits) {
-    if (verbose) {
-      print("Computing Eigenvector centrality...")
-    }
-    data$eigenvalue <- evcent(graph)$vector
-    if (normalize) {
-      data$eigenvalue <- normalize_trait(data$eigenvalue)
-    }
-  }
-  if ("eccentricity" %in% traits) {
-    if (verbose) {
-      print("Computing Eccentricity...")
-    }
-    data$eccentricity <- eccentricity(graph)
-    if (normalize) {
-      data$eccentricity <- normalize_trait(data$eccentricity)
-    }
-  }
-  if ("coreness" %in% traits) {
-    if (verbose) {
-      print("Computing Coreness...")
-    }
-    data$coreness <- coreness(graph)
-  }
-  if ("pagerank" %in% traits) {
-    if (verbose) {
-      print("Computing Pagerank...")
-    }
-    data$pagerank <- page_rank(graph)$vector
-    if (normalize) {
-      data$pagerank <- normalize_trait(data$pagerank)
-    }
-  }
-  if ("ci" %in% traits) {
-    if (verbose) {
-      print("Computing Collective Influence...")
-    }
-    data$ci <- sapply(V(graph), function(x) { collective_influence(graph, neighborhood_distance=2, x) })
-  }
-  # Adaptive ranks will not be normalized
-  if ("a-degree" %in% traits) {
-    if (verbose) {
-      print("Computing adaptive Degree centrality...")
-    }
-    data$a_degree <- get_adaptive_ranking(graph, "degree")
-  }
-  if ("a-betweenness" %in% traits) {
-    if (verbose) {
-      print("Computing adaptive Betweenness centrality...")
-    }
-    data$a_betweenness <- get_adaptive_ranking(graph, "betweenness")
-  }
-  if ("a-closeness" %in% traits) {
-    if (verbose) {
-      print("Computing adaptive Closeness centrality...")
-    }
-    data$a_closeness <- get_adaptive_ranking(graph, "closeness")
-  }
-  if ("a-eigenvalue" %in% traits) {
-    if (verbose) {
-      print("Computing adaptive Eigenvector centrality...")
-    }
-    data$a_eigenvalue <- get_adaptive_ranking(graph, "eigenvalue")
-  }
-  if ("a-eccentricity" %in% traits) {
-    if (verbose) {
-      print("Computing adaptive Eccentricity...")
-    }
-    data$a_eccentricity <- get_adaptive_ranking(graph, "eccentricity")
-  }
-  if ("a-coreness" %in% traits) {
-    if (verbose) {
-      print("Computing adaptive coreness...")
-    }
-    data$a_coreness <- get_adaptive_ranking(graph, "coreness")
-  }
-  if ("a-pagerank" %in% traits) {
-    if (verbose) {
-      print("Computing adaptive Pagerank...")
-    }
-    data$a_pagerank <- get_adaptive_ranking(graph, "pagerank")
-  }
-  if ("a-ci" %in% traits) {
-    if (verbose) {
-      print("Computing adaptive Collective Influence...")
-    }
-    data$a_ci <- get_adaptive_ranking(graph, "collective_influence")
-  }
-  data
-}
-
 #' @title Normalizes the numeric values passed in \code{x} between 0 and 1
 #' @name normalize_trait
 #' @param x is data to be normalized
@@ -391,46 +187,41 @@ generate_scale_free <- function(size, preference=1, directed=FALSE, allow_cycles
 #' @import igraph
 #' @export
 generate_holme_kim <- function(size, m, triad_prob=0.1, directed=FALSE) {
-  hk <- net.holme.kim(size, m, triad_prob)
-  mode <- ifelse(directed, "in", "total")
-  igraph::graph.adjlist(hk, mode="total")
-}
-
-#' @import igraph
-net.holme.kim <- function(n, m, pt ){
-  if (n<0 | n%%1!=0) stop("Parameter 'n' must be positive integer", call. = FALSE)
-  if (m<1 | m%%1!=0) stop("Parameter 'm' must be integer  greater than 1", call. = FALSE)
-  if (pt<0 | pt>1) stop("Parameter 'pt' must be in (0,1)", call. = FALSE)
+  if (size < 0 | size %% 1 != 0) stop("Parameter 'n' must be positive integer", call. = FALSE)
+  if (m < 1 | m %% 1 != 0) stop("Parameter 'm' must be integer  greater than 1", call. = FALSE)
+  if (pt < 0 | pt > 1) stop("Parameter 'pt' must be in (0,1)", call. = FALSE)
   graph <- list()
-  graph[n] <- list(NULL)
-  ##Create the m0 graph + (m+1)node
-  graph[[m+1]] <- seq(m)
+  graph[size] <- list(NULL)
+  ## Create the m0 graph + (m + 1) node
+  graph[[m + 1]] <- seq(m)
   for ( k in seq(m)) {
-    graph[[k]] <- m+1
+    graph[[k]] <- m + 1
   }
-  df <- c( rep(1,m),m,rep(0,n-m-1))
-  for (i in (m+2):n){
-    pa.neighbor <- sample(seq(n),1,prob = df)
+  df <- c(rep(1, m), m, rep(0, size - m - 1))
+  for (i in (m + 2):size){
+    pa.neighbor <- sample(seq(size), 1, prob=df)
     graph[[i]] <- pa.neighbor
-    graph[[pa.neighbor]] <- c(graph[[pa.neighbor]],i)
+    graph[[pa.neighbor]] <- c(graph[[pa.neighbor]], i)
     df[pa.neighbor] <- df[pa.neighbor] + 1
-    for (j in seq(2,m) ) {
-      pool <- setdiff( graph[[pa.neighbor]], c(i,graph[[i]]) )
-      if ( stats::runif(1) <= pt && length( pool ) !=0 ) {
+    for (j in seq(2, m)) {
+      pool <- setdiff(graph[[pa.neighbor]], c(i, graph[[i]]))
+      if (stats::runif(1) <= pt && length(pool) != 0) {
         tf.neighbor <- sample(pool, 1)
         graph[[i]] <- c(graph[[i]], tf.neighbor)
-        graph[[tf.neighbor]] = c(graph[[tf.neighbor]],i)
+        graph[[tf.neighbor]] = c(graph[[tf.neighbor]], i)
         df[tf.neighbor] <- df[tf.neighbor] + 1
       } else {
-        pa.neighbor <- sample( seq(n)[-graph[[i]]],1,prob = df[-graph[[i]]] )
+        pa.neighbor <- sample(seq(size)[-graph[[i]]], 1, prob=df[-graph[[i]]])
         graph[[i]] <- c(graph[[i]], pa.neighbor)
-        graph[[pa.neighbor]] <- c(graph[[pa.neighbor]],i)
+        graph[[pa.neighbor]] <- c(graph[[pa.neighbor]], i)
         df[pa.neighbor] <- df[pa.neighbor] + 1
       }
     }
     df[i] <- m
   }
-  graph
+  graph <- net.holme.kim(size, m, triad_prob)
+  mode <- ifelse(directed, "in", "total")
+  igraph::graph.adjlist(graph, mode="total")
 }
 
 #' @title Returns largest connected component in a network
