@@ -189,7 +189,7 @@ generate_scale_free <- function(size, preference=1, directed=FALSE, allow_cycles
 generate_holme_kim <- function(size, m, triad_prob=0.1, directed=FALSE) {
   if (size < 0 | size %% 1 != 0) stop("Parameter 'n' must be positive integer", call. = FALSE)
   if (m < 1 | m %% 1 != 0) stop("Parameter 'm' must be integer  greater than 1", call. = FALSE)
-  if (pt < 0 | pt > 1) stop("Parameter 'pt' must be in (0,1)", call. = FALSE)
+  if (triad_prob < 0 | triad_prob > 1) stop("Parameter 'pt' must be in (0,1)", call. = FALSE)
   graph <- list()
   graph[size] <- list(NULL)
   ## Create the m0 graph + (m + 1) node
@@ -205,7 +205,7 @@ generate_holme_kim <- function(size, m, triad_prob=0.1, directed=FALSE) {
     df[pa.neighbor] <- df[pa.neighbor] + 1
     for (j in seq(2, m)) {
       pool <- setdiff(graph[[pa.neighbor]], c(i, graph[[i]]))
-      if (stats::runif(1) <= pt && length(pool) != 0) {
+      if (stats::runif(1) <= triad_prob && length(pool) != 0) {
         tf.neighbor <- sample(pool, 1)
         graph[[i]] <- c(graph[[i]], tf.neighbor)
         graph[[tf.neighbor]] = c(graph[[tf.neighbor]], i)
@@ -219,9 +219,8 @@ generate_holme_kim <- function(size, m, triad_prob=0.1, directed=FALSE) {
     }
     df[i] <- m
   }
-  graph <- net.holme.kim(size, m, triad_prob)
   mode <- ifelse(directed, "in", "total")
-  igraph::graph.adjlist(graph, mode="total")
+  graph.adjlist(graph, mode="total")
 }
 
 #' @title Returns largest connected component in a network

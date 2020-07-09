@@ -24,7 +24,7 @@ optimal_influential(
 \item{parallel}{when true, executes the funtion using multiple CPU cores. Default value is TRUE}
 }
 \value{
-object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 }
 \description{
 Implements optimal algorithm for Influence Maximization

@@ -18,7 +18,7 @@ collective_influence_influential(
 \item{test_method}{specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"}
 }
 \value{
-object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 }
 \description{
 Returns the most influential nodes in a graph using Collective influence heuristic

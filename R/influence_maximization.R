@@ -22,14 +22,15 @@ setup <- function(logging=TRUE) {
 #' @param parallel when true, executes the funtion using multiple CPU cores. Default value is TRUE
 #' @param optimal_solution should be TRUE if influential nodes are to be derived using optimal algorithm. Caution! This is the slowest apporach
 #' @param logging when true, a complete log is stored in output.log file
-#' @return object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
-#' @import igraph foreach snow doSNOW parallel
+#' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+#' @import logging igraph
 #' @export
 influence <- function(graph, budget=1, prob=0.5, steps=1, optimal_solution=FALSE,
                       test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
                       heuristic=c("GREEDY", "PAGERANK", "COLLECTIVE_INFLUENCE", "CORENESS", "CENTRALITY", "ADAPTIVE_CENTRALITY"),
                       centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR"),
                       parallel=TRUE, logging=TRUE) {
+  output <- NULL
   if (logging) {
     loginfo(paste("influence function parameters: graph_size=", vcount(graph), ", budget=", budget, ", prob=", prob,
                   ", steps=", steps, ", test_method=", test_method, ", parallel=", parallel, ", optimal_solution=", optimal_solution, sep=''))
@@ -54,6 +55,7 @@ influence <- function(graph, budget=1, prob=0.5, steps=1, optimal_solution=FALSE
   if (logging) {
     loginfo(paste("Elapsed time (milliseconds)", output$time))
   }
+  output
 }
 
 #' @title Returns the most influential nodes in a graph using adaptive centrality-based heuristics
@@ -62,28 +64,32 @@ influence <- function(graph, budget=1, prob=0.5, steps=1, optimal_solution=FALSE
 #' @param budget number of influential nodes to be fetched. Default value is 1
 #' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
 #' @param centrality_method defines the centrality method to be used. Value must be:
-#' @return object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+#' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 #' @import igraph
 #' @export
 adaptive_centrality_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
                                    centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR")) {
   start <- as.numeric(Sys.time())
   # Preserve original graph as this object will be overwritten
-  original_graph <- graph
+  g <- graph
   V(graph)$name <- V(graph)
   influential_nodes <- NULL
   # Calculate the actual number of nodes to select
   for (i in 1:budget) {
-    param <- get_centrality_scores(graph, centrality_method=centrality_method)
-    max_node <- which.max(param)
-    influential_nodes <- c(influential_nodes, V(graph)[max_node]$name)
-    graph <- delete.vertices(graph, max_node)
-    graph <- largest_component(graph)
+    # Get the node with highest score
+    max_node <- which.max(get_centrality_scores(g, centrality_method=centrality_method))
+    influential_nodes <- c(influential_nodes, V(g)[max_node]$name)
+    g <- delete.vertices(g, max_node)
+    g <- largest_component(g)
+    # Break if the graph is already disconnected
+    if (vcount(g) == 1) {
+      break
+    }
   }
   end <- as.numeric(Sys.time())
   output <- NULL
-  output$influential_nodes <- influential_nodes
-  output$influence <- get_influence(original_graph, output$influential_nodes, test_method=test_method)
+  output$influential_nodes <- V(graph)[as.numeric(influential_nodes)]
+  output$influence <- get_influence(graph, output$influential_nodes, test_method=test_method)
   output$time <- (end - start)
   output
 }
@@ -94,8 +100,8 @@ adaptive_centrality_influential <- function(graph, budget=1, test_method=c("RESI
 #' @param budget number of influential nodes to be fetched. Default value is 1
 #' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
 #' @param centrality_method defines the centrality method to be used. Value must be:
-#' @return object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
-#' @import igraph
+#' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+#' @import igraph utils
 #' @export
 centrality_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
                                    centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR")) {
@@ -119,8 +125,8 @@ centrality_influential <- function(graph, budget=1, test_method=c("RESILIENCE", 
 #' @param graph is the igraph object
 #' @param budget number of influential nodes to be fetched. Default value is 1
 #' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
-#' @return object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
-#' @import igraph
+#' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+#' @import igraph utils
 #' @export
 collective_influence_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC")) {
   start <- as.numeric(Sys.time())
@@ -143,8 +149,8 @@ collective_influence_influential <- function(graph, budget=1, test_method=c("RES
 #' @param graph is the igraph object
 #' @param budget number of influential nodes to be fetched. Default value is 1
 #' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
-#' @return object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
-#' @import igraph
+#' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+#' @import igraph utils
 #' @export
 pagerank_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC")) {
   start <- as.numeric(Sys.time())
@@ -167,8 +173,8 @@ pagerank_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "I
 #' @param graph is the igraph object
 #' @param budget number of influential nodes to be fetched. Default value is 1
 #' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
-#' @return object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
-#' @import igraph
+#' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+#' @import igraph utils
 #' @export
 coreness_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC")) {
   start <- as.numeric(Sys.time())
@@ -227,7 +233,7 @@ greedy_influential <- function(graph, budget, steps, prob=0.5, test_method) {
   }
   end <- as.numeric(Sys.time())
   output <- NULL
-  output$influential_nodes <- seed
+  output$influential_nodes <- V(graph)[seed]
   output$time <- (end - start)
   output$influence <- get_influence(graph, output$influential_nodes, test_method=test_method)
   output
@@ -240,8 +246,8 @@ greedy_influential <- function(graph, budget, steps, prob=0.5, test_method) {
 #' @param prob probability at which a node influences its neighbours
 #' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
 #' @param parallel when true, executes the funtion using multiple CPU cores. Default value is TRUE
-#' @return object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
-#' @import igraph snow doSNOW iterpc foreach
+#' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+#' @import igraph iterpc foreach parallel
 #' @export
 optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"), parallel=TRUE) {
   start <- as.numeric(Sys.time())
@@ -249,19 +255,20 @@ optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIEN
   # Add another column to store total spread
   combinations <- cbind(combinations, 0)
   if (parallel) {
-    cores <- detectCores() - 1
-    cl <- makeCluster(cores)
-    registerDoSNOW(cl)
-    loginfo(paste("Calculating spread under", test_method))
-    # foreach requires us to define each packages and function name used within it
-    spreads <- foreach (i = 1:nrow(combinations), .packages=c("igraph"), .export=c("get_influence", "simulate_ic", "simulate_lt")) %dopar% {
-      nodes <- combinations[i,1:budget]
-      get_influence(graph, nodes, test_method)
+    if (requireNamespace("parallel", quietly=TRUE) && requireNamespace("snow", quietly=TRUE) && requireNamespace("doSNOW", quietly=TRUE)) {
+      cores <- detectCores() - 1
+      cl <- snow::makeCluster(cores)
+      doSNOW::registerDoSNOW(cl)
+      loginfo(paste("Calculating spread under", test_method))
+      # foreach requires us to define each packages and function name used within it
+      spreads <- foreach (i = 1:nrow(combinations), .packages=c("igraph"), .export=c("get_influence", "simulate_ic", "simulate_lt")) %dopar% {
+        nodes <- combinations[i,1:budget]
+        get_influence(graph, nodes, test_method)
+      }
+      combinations[,(budget + 1)] <- unlist(spreads)
+      # Unregister cluster
+      snow::stopCluster(cl)
     }
-    combinations[,(budget + 1)] <- unlist(spreads)
-    # Unregister cluster
-    registerDoSEQ()
-    stopCluster(cl)
   }
   else {
     for (i in 1:nrow(combinations)) {

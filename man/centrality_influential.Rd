@@ -21,7 +21,7 @@ centrality_influential(
 \item{centrality_method}{defines the centrality method to be used. Value must be:}
 }
 \value{
-object containing: 1. Vector or influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
+object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 }
 \description{
 Returns the most influential nodes in a graph using centrality-based heuristics
