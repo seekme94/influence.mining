@@ -280,8 +280,17 @@ optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIEN
   end <- as.numeric(Sys.time())
   output <- NULL
   output$influence <- max(combinations[, (budget + 1)])
-  influentials <- combinations[combinations[, (budget + 1)] == output$influence,][-(budget + 1)]
+  influentials <- combinations[combinations[, (budget + 1)] == output$influence, 1:budget]
+  # If there are multiple sets with same influence, then a matrix will be returned
+  if (class(influentials) == "matrix") {
+    # Pick the first vector in this case
+    influentials <- influentials[1,]
+  }
   output$influential_nodes <- V(graph)[influentials]
+  # If the influence is uniform for all nodes then pick any node randomly
+  if (length(output$influential_nodes) > budget) {
+    output$influential_nodes <- sample(output$influential_nodes, budget)
+  }
   output$time <- (end - start)
   output
 }
@@ -571,57 +580,6 @@ simulate_lt <- function(graph, active, threshold=0.5) {
     active <- c(active, u)
   }
   count
-}
-
-#' @title Returns the centrality values of nodes in a graph using given method
-#' @name get_centrality_scores
-#' @param graph is the igraph object
-#' @param centrality_method defines the centrality method to be used. Value must be:
-#' @return vector of centrality scores
-#' @import igraph
-#' @examples {
-#' graph <- erdos.renyi.game(500, 0.05)
-#' get_centrality_scores(graph, centrality_method="DEGREE")
-#' get_centrality_scores(graph, centrality_method="BETWEENNESS")
-#' get_centrality_scores(graph, centrality_method="CLOSENESS")
-#' get_centrality_scores(graph, centrality_method="EIGENVECTOR")
-#' }
-#' @export
-get_centrality_scores <- function(graph, centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR")) {
-  if (centrality_method == "DEGREE") {
-    # Calculate in/out degrees of all nodes
-    degree(graph, V(graph), mode="all", loops=FALSE, normalized=FALSE)
-  }
-  else if(centrality_method == "BETWEENNESS") {
-    # Calculate betweenness centrality (for huge data sets, use betweenness.estimate() and give some max value of path length as cutoff)
-    betweenness(graph, V(graph), directed=FALSE)
-  }
-  else if (centrality_method == "CLOSENESS") {
-    # Calculate in/out closeness of all nodes, normalized between 0 and 1
-    closeness(graph, V(graph), mode="all", normalized=TRUE)
-  }
-  else if (centrality_method == "EIGENVECTOR") {
-    # Calculate eigenvectors of the graph
-    eigen <- evcent(graph, directed=FALSE)
-    eigen$vector
-  }
-}
-
-#' @title Calculates resilience of network
-#' @name resilience
-#' @param graph is the weighted igraph object
-#' @param nodes is a set of nodes to check resilience of
-#' @return number of remaining nodes in largest connected component after removing nodes
-#' @examples {
-#' graph <- erdos.renyi.game(500, 0.005)
-#' resilience(graph, nodes=V(graph)[c(2,5,9,23)])
-#' }
-#' @import igraph
-#' @export
-resilience <- function (graph, nodes) {
-  graph <- delete.vertices(graph, nodes)
-  graph <- largest_component(graph)
-  vcount(graph)
 }
 
 #' @title Quantifies the influence of a set of nodes in a graph

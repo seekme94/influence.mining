@@ -33,6 +33,83 @@ graph_summary <- function(graph, plot=FALSE) {
   o
 }
 
+#' Calculates several traits from given graph and returns as data frame
+#'
+#' @name get_graph_traits
+#' @param graph is the igraph object
+#' @param normalize uses pnorm function to normalize the traits. Default is FALSE
+#' @param graph_traits is the vector of several graph metrices to calculate
+#' @param node_traits is the vector of several node metrices to calculate
+#' @param verbose prints the progress log on console when TRUE. Default is FALSE
+#' @return data frame containing graph and its traits
+#' @import igraph
+#' @export
+get_graph_traits <- function(graph, normalize=FALSE,
+    graph_traits=c("SIZE", "EDGES", "AVERAGE_DEGREE", "MAX_DEGREE", "AVERAGE_PATH_LENGTH", "CLUSTERING_COEFFICIENT", "DIAMETER", "DENSITY", "ASSORTATIVITY", "AVERAGE_DISTANCE", "TRIADS", "GIRTH"),
+    node_traits=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY", "CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE", "ADAPTIVE_DEGREE", "ADAPTIVE_BETWEENNESS", "ADAPTIVE_CLOSENESS", "ADAPTIVE_EIGENVALUE", "ADAPTIVE_ECCENTRICITY", "ADAPTIVE_CORENESS", "ADAPTIVE_PAGERANK", "ADAPTIVE_COLLECTIVE_INFLUENCE"), verbose=FALSE) {
+  # First, fetch all the node traits
+  if (verbose) {
+    print("Computing centrality traits...")
+  }
+  data <- NULL
+  data$name <- 1:vcount(graph) - 1
+  data$degree <- get_centrality_scores(graph, "DEGREE", normalize=normalize)
+  if ("BETWEENNESS" %in% node_traits)
+    data$betweenness <- get_centrality_scores(graph, "BETWEENNESS", normalize=normalize)
+  if ("CLOSENESS" %in% node_traits)
+    data$closeness <- get_centrality_scores(graph, "CLOSENESS", normalize=normalize)
+  if ("EIGENVECTOR" %in% node_traits)
+    data$eigenvalue <- get_centrality_scores(graph, "EIGENVECTOR", normalize=normalize)
+  if ("ECCENTRICITY" %in% node_traits)
+    data$eccentricity <- get_centrality_scores(graph, "ECCENTRICITY", normalize=normalize)
+  if (verbose) {
+    print("Computing node heuristic traits...")
+  }
+  if ("CORENESS" %in% node_traits) {
+    data$coreness <- coreness(graph)
+    if (normalize) {
+      data$coreness <- normalize_trait(data$coreness)
+    }
+  }
+  if ("PAGERANK" %in% node_traits) {
+    data$pagerank <- page_rank(graph)$vector
+    if (normalize) {
+      data$pagerank <- normalize_trait(data$pagerank)
+    }
+  }
+  if ("COLLECTIVE_INFLUENCE" %in% node_traits) {
+    data$ci <- sapply(V(graph), function(x) { collective_influence(graph, neighborhood_distance=2, x) })
+  }
+  if (verbose) {
+    print("Computing graph traits...")
+  }
+  if ("SIZE" %in% graph_traits)
+    data$graph_size <- vcount(graph)
+  if ("EDGES" %in% graph_traits)
+    data$graph_edges <- ecount(graph)
+  if ("AVERAGE_DEGREE" %in% graph_traits)
+    data$graph_avg_degree <- mean(data$degree)
+  if ("MAX_DEGREE" %in% graph_traits)
+    data$graph_max_degree <- max(data$degree)
+  if ("AVERAGE_PATH_LENGTH" %in% graph_traits)
+    data$graph_apl <- average.path.length(graph)
+  if ("CLUSTERING_COEFFICIENT" %in% graph_traits)
+    data$graph_clust_coef <- transitivity(graph)
+  if ("DIAMETER" %in% graph_traits)
+    data$graph_diameter <- diameter(graph)
+  if ("DENSITY" %in% graph_traits)
+    data$graph_density <- graph.density(graph)
+  if ("ASSORTATIVITY" %in% graph_traits)
+    data$graph_assortativity <- assortativity.degree(graph)
+  if ("AVERAGE_DISTANCE" %in% graph_traits)
+    data$graph_avg_distance <- mean_distance(graph)
+  if ("TRIADS" %in% graph_traits)
+    data$graph_triads <- length(triangles(graph))
+  if ("GIRTH" %in% graph_traits)
+    data$graph_girth <- girth(graph)$girth
+  data
+}
+
 #' @title Normalizes the numeric values passed in \code{x} between 0 and 1
 #' @name normalize_trait
 #' @param x is data to be normalized
@@ -40,7 +117,7 @@ graph_summary <- function(graph, plot=FALSE) {
 #' @import igraph
 #' @export
 normalize_trait <- function(x) {
-  pnorm(x, mean(x), sd(x))
+  stats::pnorm(x, mean(x), sd(x))
 }
 
 #' @title  Normalize a set of numeric variables in a dataset between 0 and 1. Non-numeric data will be skipped
@@ -57,7 +134,7 @@ normalize_data <- function(data, columns) {
       next
     }
     x <- data[, column]
-    x <- pnorm(x, mean(x), sd(x))
+    x <- stats::pnorm(x, mean(x), sd(x))
     data[, column] <- x
   }
   data
@@ -233,4 +310,101 @@ largest_component <- function(graph) {
   gclust = igraph::clusters(graph)
   lcc = induced.subgraph(graph, V(graph)[which(gclust$membership == which.max(gclust$csize))])
   lcc
+}
+
+#' @title Returns the centrality values of nodes in a graph using given method
+#' @name get_centrality_scores
+#' @param graph is the igraph object
+#' @param centrality_method defines the centrality method to be used. Value must be: "DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY"
+#' @param normalize scales the values in the output vector between 0 and 1
+#' @return vector of centrality scores
+#' @import igraph
+#' @examples {
+#' graph <- erdos.renyi.game(500, 0.05)
+#' get_centrality_scores(graph, centrality_method="DEGREE")
+#' get_centrality_scores(graph, centrality_method="BETWEENNESS")
+#' get_centrality_scores(graph, centrality_method="CLOSENESS")
+#' get_centrality_scores(graph, centrality_method="EIGENVECTOR")
+#' get_centrality_scores(graph, centrality_method="ECCENTRICITY")
+#' }
+#' @export
+get_centrality_scores <- function(graph, centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY"), normalize=FALSE) {
+  x <- NULL
+  if (centrality_method == "DEGREE") {
+    # Calculate in/out degrees of all nodes
+    x <- degree(graph, V(graph), mode="all", loops=FALSE, normalized=FALSE)
+  }
+  else if(centrality_method == "BETWEENNESS") {
+    # Calculate betweenness centrality (TODO: for huge data sets, use betweenness.estimate() and give some max value of path length as cutoff)
+    x <- betweenness(graph, V(graph), directed=FALSE)
+  }
+  else if (centrality_method == "CLOSENESS") {
+    # Calculate in/out closeness of all nodes
+    x <- closeness(graph, V(graph), mode="all", normalized=FALSE)
+  }
+  else if (centrality_method == "EIGENVECTOR") {
+    # Calculate eigenvectors of the graph
+    eigen <- evcent(graph, directed=FALSE)
+    x <- eigen$vector
+  }
+  else if (centrality_method == "ECCENTRICITY") {
+    x <- eccentricity(graph, mode="all")
+  }
+  if (normalize) {
+    normalize_trait(x)
+  }
+  x
+}
+
+#' Returns ranks from 1 to highest rank before the graph is discontinued, using scores of nodes (e.g. Degree, Pagerank, Coreness, etc.)
+#' @name get_adaptive_rank
+#' @param graph the igraph object
+#' @param ranking_method the adaptive method to use. Value must be "DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY", "CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE"
+#' @return vector of ranks
+#' @import igraph
+#' @export
+get_adaptive_rank <- function(graph, ranking_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY", "CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE")) {
+  V(g)$name <- V(g)
+  V(g)$rank <- -1
+  current_rank <- 1
+  graph <- g
+  while (TRUE) {
+    graph <- largest_component(graph)
+    param <- 0
+    if (ranking_method %in% c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY")) {
+      param <- get_centrality_scores(graph, centrality_method=ranking_method)
+    } else if (ranking_method == "CORENESS") {
+      param <- graph.coreness(graph, mode="all")
+    } else if (ranking_method == "PAGERANK") {
+      param <- page_rank(graph, directed=TRUE)$vector
+    } else if (ranking_method == "COLLECTIVE_INFLUENCE") {
+      param <- sapply(V(graph), function(x) { collective_influence(graph, neighborhood_distance=2, x) })
+    }
+    max_nodes <- which.max(param)
+    V(g)[V(g)$name == V(graph)[max_nodes]$name]$rank <- current_rank
+    graph <- delete.vertices(graph, max_nodes)
+    current_rank <- current_rank + 1
+    if (vcount(graph) <= 1) {
+      break
+    }
+  }
+  V(g)$rank[V(g)$rank == -1] <- current_rank
+  V(g)$rank
+}
+
+#' @title Calculates resilience of network
+#' @name resilience
+#' @param graph is the weighted igraph object
+#' @param nodes is a set of nodes to check resilience of
+#' @return number of remaining nodes in largest connected component after removing nodes
+#' @examples {
+#' graph <- erdos.renyi.game(500, 0.005)
+#' resilience(graph, nodes=V(graph)[c(2,5,9,23)])
+#' }
+#' @import igraph
+#' @export
+resilience <- function (graph, nodes) {
+  graph <- delete.vertices(graph, nodes)
+  graph <- largest_component(graph)
+  vcount(graph)
 }
