@@ -262,7 +262,7 @@ optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIEN
       loginfo(paste("Calculating spread under", test_method))
       # foreach requires us to define each packages and function name used within it
       spreads <- foreach (i = 1:nrow(combinations), .packages=c("igraph"), .export=c("get_influence", "simulate_ic", "simulate_lt")) %dopar% {
-        nodes <- combinations[i,1:budget]
+        nodes <- combinations[i, 1:budget]
         get_influence(graph, nodes, test_method)
       }
       combinations[,(budget + 1)] <- unlist(spreads)
@@ -279,8 +279,8 @@ optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIEN
   }
   end <- as.numeric(Sys.time())
   output <- NULL
-  output$influence <- max(combinations[,(budget + 1)])
-  influentials <- combinations[which(combinations[,(budget + 1)] == output$influence),][1,1:budget]
+  output$influence <- max(combinations[, (budget + 1)])
+  influentials <- combinations[combinations[, (budget + 1)] == output$influence,][-(budget + 1)]
   output$influential_nodes <- V(graph)[influentials]
   output$time <- (end - start)
   output
@@ -483,7 +483,6 @@ simulate_ic <- function(graph, active) {
   # each node u in V attempts to activate its neighbours with probability equal to the weight on its edge.
   # If a coin toss with this probability is successful, then the inactive neighbour gets activated.
   # Once active, a node does not deactivate
-
   count <- 0
   # If the graph is unweighted, then default the weights to 1
   if (!is_weighted(graph)) {
@@ -492,16 +491,16 @@ simulate_ic <- function(graph, active) {
     E(graph)$weight <- normalize_trait(E(graph)$weight)
   }
   tried <- NULL
-  for (i in 1:length(active)) {
-    # Get first node
-    node <- active[1]
-    # Remove this node from active list
-    active <- active[-1]
+  for (node in active) {
     # Fetch neighbours of node
     neighbour_nodes <- neighbors(graph, node)
     # Remove already activated nodes from neighbours
     neighbour_nodes <- neighbour_nodes[!neighbour_nodes %in% active]
+    # Remove already tried to be influenced from neighbours
     neighbour_nodes <- neighbour_nodes[!neighbour_nodes %in% tried]
+    if (length(neighbour_nodes) == 0) {
+      next
+    }
     # Try to activate inactive neighbours according to the weight on edge
     for (j in 1:length(neighbour_nodes)) {
       weight <- E(graph, P=c(node, neighbour_nodes[j]))$weight
@@ -569,6 +568,7 @@ simulate_lt <- function(graph, active, threshold=0.5) {
     if (ratio >= threshold) {
       count <- count + 1
     }
+    active <- c(active, u)
   }
   count
 }

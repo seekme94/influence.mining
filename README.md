@@ -23,10 +23,7 @@ devtools::install_github("seekme94/influence.mining")
 
 ## Package tutorial
 
-```
-influence_maximization.R
-```
-All influence mining functions are provided in this source file. The primary interfacing function, **influence** is a wrapper function, which calls other functions. For most of the users, this should be enough for applications.
+All influence mining functions are provided in influence_maximization file. The primary interfacing function, **influence** is a wrapper function, which calls other functions. For most of the users, this should be enough for applications.
 ```
 influence (graph, budget, prob, steps, optimal_solution, test_method, heuristic, centrality_method, parallel, logging)
 ```
@@ -87,10 +84,10 @@ $time
 ```
 
 Example 3:
-On the famous karate club graph, find the globally optimal influential nodes using Resilience test to quantify the influence.
+On the famous karate club graph, find the globally optimal influential nodes using Independent cascade test to quantify the influence.
 ```
-graph <- generate_scale_free(200)
-influence(graph, budget=5, prob=0.5, steps=1, optimal_solution=FALSE, test_method="RESILIENCE", heuristic="PAGERANK")
+graph <- load_karate_club_graph()
+influence(graph, budget=3, prob=0.5, steps=1, optimal_solution=TRUE, test_method="INFLUENCE_IC")
 ```
 Output
 ```
@@ -105,6 +102,31 @@ $time
 [1] 0.0009799004
 ```
 
+Example 4:
+On the built-in twitter network, find most influential nodes with Coreness heuristic using Independent cascade test to quantify the influence.
+```
+graph <- load_twitter_graph()
+influence(graph, budget=5, prob=0.5, steps=1, optimal_solution=FALSE, test_method="INFLUENCE_LT", heuristic="CORENESS")
+```
+Output
+
+### Build-in datasets
+The package comes with 13 graph datasets with varying properties. The description of each dataset can be found in the respective function documentation. These can be loaded using the following functions:
+```
+load_arxiv_collaboration_graph()
+load_author_netscience_graph()
+load_influence_citation_graph()
+load_football_graph()
+load_ita2000_graph()
+load_jdk6_dependencies_graph()
+load_karate_club_graph()
+load_twitter_graph()
+load_nematode_neural_network_graph()
+load_political_blog_graph()
+load_protein_barabasi_graph()
+load_wordnet_graph()
+load_world_trade_graph()
+```
 
 ### Libraries used
 See the [DESCRIPTION file](https://github.com/seekme94/influence.mining/blob/master/DESCRIPTION)
