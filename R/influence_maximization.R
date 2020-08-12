@@ -576,8 +576,8 @@ simulate_lt <- function(graph, active, threshold=0.5) {
     ratio <- (length(active_neighbours) / length(neighbours))
     if (ratio >= threshold) {
       count <- count + 1
+      active <- c(active, V(graph)[u])
     }
-    active <- c(active, u)
   }
   count
 }
@@ -629,4 +629,25 @@ collective_influence <- function(graph, neighborhood_distance, node_id, method=c
   node_degree <- (degree(graph,node_id)[[1]]) - 1
   ans <- node_degree * total_sum
   ans
+}
+
+#' @title Returns H-index (Hirsch number)
+#' @name h_index
+#' @param graph the igraph object
+#' @param node_id is the ID of the target node
+#' @return h-index of the target node in the graph
+#' @examples {h_index(graph=erdos.renyi.game(100, 0.2), 1)}
+#' @import igraph
+#' @export
+h_index <- function(graph, node_id) {
+  # Calculate the degree of this node
+  node_degree <- degree(graph, node_id)
+  # Fetch all the nodes in the neighborhood
+  node_neighbours <- neighborhood(graph, 1, nodes=node_id, mode="all")[[1]]
+  # Fetch degrees of all neighbours
+  neighbour_degrees <- degree(graph, node_neighbours)
+  # Calculate minumum degree from neighbours
+  min_neighbour_degree <- min(neighbour_degrees)
+  # If min_neighbour_degree is less than or equal to node_degree, then h-index is min_neighbour_degree, otherwise node_degree is h-index
+  ifelse(min_neighbour_degree <= node_degree, min_neighbour_degree, node_degree)
 }

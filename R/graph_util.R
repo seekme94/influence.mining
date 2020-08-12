@@ -59,7 +59,7 @@ get_graph_traits <- function(graph, normalize=FALSE,
   if ("CLOSENESS" %in% node_traits)
     data$closeness <- get_centrality_scores(graph, "CLOSENESS", normalize=normalize)
   if ("EIGENVECTOR" %in% node_traits)
-    data$eigenvalue <- get_centrality_scores(graph, "EIGENVECTOR", normalize=normalize)
+    data$eigenvector <- get_centrality_scores(graph, "EIGENVECTOR", normalize=normalize)
   if ("ECCENTRICITY" %in% node_traits)
     data$eccentricity <- get_centrality_scores(graph, "ECCENTRICITY", normalize=normalize)
   if (verbose) {
@@ -364,7 +364,8 @@ get_centrality_scores <- function(graph, centrality_method=c("DEGREE", "BETWEENN
 #' @import igraph
 #' @export
 get_adaptive_rank <- function(graph, ranking_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY", "CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE")) {
-  V(g)$name <- V(g)
+  g <- graph
+  V(g)$name <- V(graph)
   V(g)$rank <- -1
   current_rank <- 1
   graph <- g
