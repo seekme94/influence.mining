@@ -587,6 +587,7 @@ simulate_lt <- function(graph, active, threshold=0.5) {
 #' @param graph is the igraph object
 #' @param nodes the set of nodes to calculate influence for
 #' @param test_method specifies the method to measure influence. Value "RESILIENCE" (number of total nodes REMOVED (NOT THE REMAINING ones as in original resilience function) from the graph); "INFLUENCE_IC" (see simulate_ic method); "INFLUENCE_LT" (see simulate_lt method). Default is "RESILIENCE"
+#' @param lt_threshold is used as threshold for INFLUENCE_LT
 #' @return vector of resiliences of provided combinations
 #' @examples {
 #' graph <- erdos.renyi.game(100, 0.2)
@@ -594,13 +595,13 @@ simulate_lt <- function(graph, active, threshold=0.5) {
 #' }
 #' @import igraph
 #' @export
-get_influence <- function(graph, nodes, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC")) {
+get_influence <- function(graph, nodes, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"), lt_threshold=0.5) {
   if (test_method == "RESILIENCE") {
     vcount(graph) - resilience(graph, nodes)
   } else if (test_method == "INFLUENCE_IC") {
     simulate_ic(graph, nodes)
   } else if (test_method == "INFLUENCE_LT") {
-    simulate_lt(graph, nodes)
+    simulate_lt(graph, nodes, threshold=lt_threshold)
   }
 }
 

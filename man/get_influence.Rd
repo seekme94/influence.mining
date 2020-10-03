@@ -7,7 +7,8 @@
 get_influence(
   graph,
   nodes,
-  test_method = c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC")
+  test_method = c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
+  lt_threshold = 0.5
 )
 }
 \arguments{
@@ -16,6 +17,8 @@ get_influence(
 \item{nodes}{the set of nodes to calculate influence for}
 
 \item{test_method}{specifies the method to measure influence. Value "RESILIENCE" (number of total nodes REMOVED (NOT THE REMAINING ones as in original resilience function) from the graph); "INFLUENCE_IC" (see simulate_ic method); "INFLUENCE_LT" (see simulate_lt method). Default is "RESILIENCE"}
+
+\item{lt_threshold}{is used as threshold for INFLUENCE_LT}
 }
 \value{
 vector of resiliences of provided combinations
