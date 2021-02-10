@@ -39,7 +39,7 @@ influence <- function(graph, budget=1, prob=0.5, steps=1, optimal_solution=FALSE
     output <- optimal_influential(graph=graph, budget=budget, prob=prob, test_method=test_method, parallel=parallel)
   } else {
     if (heuristic == "GREEDY") {
-      output <- greedy_influential(graph=graph, budget=budget, steps=steps, test_method=test_method, prob=prob)
+      output <- greedy_influential(graph=graph, budget=budget, test_method=test_method, prob=prob)
     } else if (heuristic == "PAGERANK") {
       output <- pagerank_influential(graph=graph, budget=budget, test_method=test_method)
     } else if (heuristic == "COLLECTIVE_INFLUENCE") {
@@ -67,6 +67,7 @@ influence <- function(graph, budget=1, prob=0.5, steps=1, optimal_solution=FALSE
 #' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 #' @import igraph
 #' @export
+#' @references Lipton, R. J., & Naughton, J. F. (1989). Estimating the size of generalized transitive closures. In Proceedings of the 15th Int. Conf. on Very Large Data Bases.
 adaptive_centrality_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
                                    centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR")) {
   start <- as.numeric(Sys.time())
@@ -103,6 +104,11 @@ adaptive_centrality_influential <- function(graph, budget=1, test_method=c("RESI
 #' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 #' @import igraph utils
 #' @export
+#' @references {
+#' Harary, F., Norman, R. Z., & Cartwright, D. (1965). Structural models: An introduction to the theory of directed graphs. Wiley.;
+#' Freeman, L. C. (1977). A set of measures of centrality based on betweenness. Sociometry, 35-41.;
+#' Freeman, L. C. (1978). Centrality in social networks conceptual clarification. Social networks, 1(3), 215-239.
+#' }
 centrality_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
                                    centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR")) {
   start <- as.numeric(Sys.time())
@@ -128,6 +134,7 @@ centrality_influential <- function(graph, budget=1, test_method=c("RESILIENCE", 
 #' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 #' @import igraph utils
 #' @export
+#' @references Morone, F., & Makse, H. a. (2015). Influence maximization in complex networks through optimal percolation: supplementary information. Current Science, 93(1), 17–19.
 collective_influence_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC")) {
   start <- as.numeric(Sys.time())
   # Get Collective influence score of all nodes
@@ -152,6 +159,7 @@ collective_influence_influential <- function(graph, budget=1, test_method=c("RES
 #' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 #' @import igraph utils
 #' @export
+#' @references Page, L., Brin, S., Motwani, R., & Winograd, T. (1999). The PageRank Citation Ranking: Bringing Order to the Web.
 pagerank_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC")) {
   start <- as.numeric(Sys.time())
   # Get Pagerank of all nodes
@@ -176,6 +184,7 @@ pagerank_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "I
 #' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 #' @import igraph utils
 #' @export
+#' @references Zhang, X., Zhu, J., Wang, Q., & Zhao, H. (2013). Identifying influential nodes in complex networks with community structure. Knowledge-Based Systems, 42.
 coreness_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC")) {
   start <- as.numeric(Sys.time())
   # Get coreness of all nodes
@@ -201,14 +210,14 @@ coreness_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "I
 #' @name greedy_influential
 #' @param graph is the igraph object
 #' @param budget number of influential nodes to be fetched. Default value is 1
-#' @param steps is the time steps for which, the diffusion process should run. If exhaustive run is required, provide a high value (like 100). Default value is 1
-#' @param prob is the probability of activation of a neighbour node. Default is 0.5
+#' @param prob probability at which a node influences its neighbours. In case of INFLUENCE_LT, this is becomes the threshold value. Default is 0.5
 #' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
 #' @return output containing summary
-#' @examples {greedy_influential(erdos.renyi.game(500, 0.005), budget=5, steps=99, prob=0.5, "RESILIENCE")}
+#' @examples {greedy_influential(erdos.renyi.game(500, 0.005), budget=5, prob=0.5, "RESILIENCE")}
 #' @import igraph
 #' @export
-greedy_influential <- function(graph, budget, steps, prob=0.5, test_method) {
+#' @references Kempe, D., Kleinberg, J., & Tardos, É. (2003). Maximizing the Spread of Influence through a Social Network. Proceedings of the Ninth ACM SIGKDD International Conference on Knowledge Discovery and Data Mining - KDD ’03, 137.
+greedy_influential <- function(graph, budget, prob=0.5, test_method) {
   start <- as.numeric(Sys.time())
   # Save list of nodes
   nodes <- V(graph)
@@ -221,7 +230,7 @@ greedy_influential <- function(graph, budget, steps, prob=0.5, test_method) {
     # For all nodes except seed
     for (node in setdiff(nodes, seed)) {
       # Find infuence of node with existing nodes in seed
-      current <- get_influence(graph, c(seed, node), test_method)
+      current <- get_influence(graph, c(seed, node), test_method, lt_threshold=prob)
       # If current node causes more influence than maximum so far, then swap
       if (current > max_influence) {
         most_influential <- node
@@ -235,7 +244,7 @@ greedy_influential <- function(graph, budget, steps, prob=0.5, test_method) {
   output <- NULL
   output$influential_nodes <- V(graph)[seed]
   output$time <- (end - start)
-  output$influence <- get_influence(graph, output$influential_nodes, test_method=test_method)
+  output$influence <- get_influence(graph, output$influential_nodes, test_method=test_method, lt_threshold=prob)
   output
 }
 
@@ -243,12 +252,13 @@ greedy_influential <- function(graph, budget, steps, prob=0.5, test_method) {
 #' @name optimal_influential
 #' @param graph is the igraph object
 #' @param budget number of influential nodes to be fetched. Default value is 1
-#' @param prob probability at which a node influences its neighbours
+#' @param prob probability at which a node influences its neighbours. In case of INFLUENCE_LT, this is becomes the threshold value. Default is 0.5
 #' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
 #' @param parallel when true, executes the funtion using multiple CPU cores. Default value is TRUE
 #' @return object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. Elapsed time in seconds.
 #' @import igraph iterpc foreach parallel
 #' @export
+#' @references Kempe, D., Kleinberg, J., & Tardos, É. (2003). Maximizing the Spread of Influence through a Social Network. Proceedings of the Ninth ACM SIGKDD International Conference on Knowledge Discovery and Data Mining - KDD ’03, 137.
 optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"), parallel=TRUE) {
   start <- as.numeric(Sys.time())
   combinations <- getall(iterpc(vcount(graph), budget))
@@ -263,7 +273,7 @@ optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIEN
       # foreach requires us to define each packages and function name used within it
       spreads <- foreach (i = 1:nrow(combinations), .packages=c("igraph"), .export=c("get_influence", "simulate_ic", "simulate_lt")) %dopar% {
         nodes <- combinations[i, 1:budget]
-        get_influence(graph, nodes, test_method)
+        get_influence(graph, nodes, test_method, lt_threshold=prob)
       }
       combinations[,(budget + 1)] <- unlist(spreads)
       # Unregister cluster
@@ -274,7 +284,7 @@ optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIEN
     for (i in 1:nrow(combinations)) {
       nodes <- combinations[i,1:budget]
       # Save spread to last column
-      combinations[i,(budget + 1)] <- get_influence(graph, nodes, test_method)
+      combinations[i,(budget + 1)] <- get_influence(graph, nodes, test_method, lt_threshold=prob)
     }
   }
   end <- as.numeric(Sys.time())
@@ -292,6 +302,153 @@ optimal_influential <- function(graph, budget, prob=0.5, test_method=c("RESILIEN
     output$influential_nodes <- sample(output$influential_nodes, budget)
   }
   output$time <- (end - start)
+  output
+}
+
+#' @title Returns the set of influential nodes identified by CELF algorithm
+#' @name celf_greedy
+#' @param graph the igraph object
+#' @param budget number of influential nodes to be fetched. Default value is 1
+#' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
+#' @return output containing summary
+#' @examples {celf_greedy(graph=erdos.renyi.game(100, 0.2), 10, "INFLUENCE_LT")}
+#' @import igraph
+#' @export
+#' @references Leskovec, J., Krause, A., Guestrin, C., Faloutsos, C., VanBriesen, J., & Glance, N. (2007). Cost-effective Outbreak Detection in Networks. Proceedings of the 13th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining - KDD ’07, 420–429.
+celf_greedy <- function(graph, budget=1, test_method) {
+  seed <- c()
+  # For each node, compute its influence independently and add maintain in a table, while setting the flag=0
+  V(graph)$name <- 1:vcount(graph)
+  df <- data.frame(node=V(graph)$name, gain=0, flag=0)
+  # Save the start time
+  start <- as.numeric(Sys.time())
+  for (i in 1:vcount(graph)) {
+    df$gain[i] <- get_influence(graph, V(graph)[i], test_method=test_method, lt_threshold=prob)
+  }
+  # Arrange the data frame by marginal gains
+  df <- arrange(df, desc(gain))
+  ## CELF starts here
+  # Until the budget is met
+  while (length(seed) < budget) {
+    top_row <- df[1,]
+    u <- V(graph)[top_row$node]
+    # If the flag is the size of the seed set so far, then add this node to the seed and remove from data frame
+    if (top_row$flag == length(seed)) {
+      seed <- c(seed, top_row$node)
+      df <- df[-1,]
+    }
+    else {
+      # Otherwise compute the marginal gain with this node
+      current_influence <- get_influence(graph, V(graph)[seed], test_method=test_method, lt_threshold=prob)
+      top_row$gain <- get_influence(graph, V(graph)[c(seed, u)], test_method=test_method, lt_threshold=prob) - current_influence
+      # Store the length of seed in the flag
+      top_row$flag <- length(seed)
+      # Update the values for this row in data frame
+      df[1,] <- top_row
+      # Sort the data frame again by gain
+      df <- arrange(df, desc(gain))
+    }
+  }
+  end <- as.numeric (Sys.time())
+  output <- NULL
+  output$influential_nodes <- V(graph)[seed]
+  output$time <- (end - start)
+  output$influence <- get_influence(graph, output$influential_nodes, test_method=test_method, lt_threshold=prob)
+  output
+}
+
+#' @title Returns the set of influential nodes identified by CELF++ algorithm
+#' @name celf_plus_plus
+#' @param graph the igraph object
+#' @param budget number of influential nodes to be fetched. Default value is 1
+#' @param test_method specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"
+#' @return output containing summary
+#' @examples {celf_plus_plus(graph=erdos.renyi.game(100, 0.2), 10, "INFLUENCE_LT")}
+#' @import igraph
+#' @export
+#' @references Leskovec, J., Krause, A., Guestrin, C., Faloutsos, C., VanBriesen, J., & Glance, N. (2007). Cost-effective Outbreak Detection in Networks. Proceedings of the 13th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining - KDD ’07, 420–429.
+celf_plus_plus <- function(graph, budget=1, test_method) {
+  # For each node, compute its influence independently and add maintain in a table, while setting the flag=0
+  V(graph)$name <- 1:vcount(graph)
+  # Save the start time
+  start <- as.numeric(Sys.time())
+  # CELF++
+  current_best <- NULL
+  df <- data.frame(node=c(), gain=c(), gain2=c(), previous_best=c(), flag=c())
+  # For each node in graph
+  for (i in 1:vcount(graph)) {
+    u <- V(graph)[i]
+    current <- data.frame(node=i)
+    # Calculate marginal gain of this node
+    current$gain <- get_influence(graph, u, test_method=test_method, lt_threshold=prob)
+    current$flag <- 0
+    # Only for first iteration, when current_best is null, pick the first node
+    if (is.null(current_best)) {
+      current_best <- u
+      current$previous_best <- 0 # No previous best yet
+      current$gain2 <- 0
+      df <- rbind(df, current)
+      next
+    }
+    # Previous best should be the node with max. marginal gain of all nodes evaluated before u
+    current$previous_best <- current_best
+    # Calculate the marginal gain of previous best seed with this node
+    inf_with_u <- get_influence(graph, V(graph)$name[c(current_best, u)], test_method=test_method, lt_threshold=prob)
+    inf_without_u <- get_influence(graph, V(graph)$name[current_best], test_method=test_method, lt_threshold=prob)
+    current$gain2 <- inf_with_u - inf_without_u
+    # Add current to the data frame
+    df <- rbind(df, current)
+    # Rearrange the data frame by marginal gains
+    df <- arrange(df, desc(gain))
+    # Append the first
+    clean_df <- df[which(!df[,1] %in% current_best),]
+    current_best <- V(graph)[clean_df[1,1]]
+  }
+  seed <- c()
+  last_best <- NULL
+  # Until the cows come home
+  while (length(seed) < budget) {
+    # Pick top node from the sorted data frame
+    top_row <- df[1,]
+    u <- V(graph)[top_row$node]
+    # If the flag is the size of the seed set so far, then add this node to the seed and remove from data frame
+    if (top_row$flag == length(seed)) {
+      seed <- c(seed, top_row$node)
+      df <- df[-1,]
+      last_seed <- u
+      current_best <- NULL
+      next
+    }
+    # If the previous best is the last_seed then no need to recompute, pick the value from gain2
+    if (top_row$previous_best == last_seed$name
+        & top_row$flag == length(seed) - 1) {
+      top_row$gain <- top_row$gain2
+    } else {
+      # Calculate marginal gain with u
+      inf_with_u <- get_influence(graph, V(graph)$name[c(seed, u)], test_method=test_method, lt_threshold=prob)
+      inf_without_u <- get_influence(graph, V(graph)$name[seed], test_method=test_method, lt_threshold=prob)
+      top_row$gain <- inf_with_u - inf_without_u
+      top_row$previous_best <- current_best
+
+      # Calculate marginal gain with u and previous best
+      inf_with_prev_best <- get_influence(graph, V(graph)$name[c(seed, top_row$previous_best, u)], test_method=test_method, lt_threshold=prob)
+      inf_without_prev_best <- get_influence(graph, V(graph)$name[c(seed, top_row$previous_best)], test_method=test_method, lt_threshold=prob)
+      top_row$gain2 <- inf_with_prev_best - inf_without_prev_best
+    }
+    if (!is.null(current_best)) {
+      if (df$gain[df$node == current_best] < top_row$gain) {
+        current_best <- u
+      }
+    }
+    top_row$flag <- length(seed)
+    df[1,] <- top_row
+    df <- arrange(df, desc(gain))
+  }
+  end <- as.numeric (Sys.time())
+  output <- NULL
+  output$influential_nodes <- V(graph)[seed]
+  output$time <- (end - start)
+  output$influence <- get_influence(graph, output$influential_nodes, test_method=test_method, lt_threshold=prob)
   output
 }
 
