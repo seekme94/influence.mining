@@ -54,14 +54,18 @@ get_graph_traits <- function(graph, normalize=FALSE,
   data <- NULL
   data$name <- 1:vcount(graph) - 1
   data$degree <- get_centrality_scores(graph, "DEGREE", normalize=normalize)
-  if ("BETWEENNESS" %in% node_traits)
+  if ("BETWEENNESS" %in% node_traits) {
     data$betweenness <- get_centrality_scores(graph, "BETWEENNESS", normalize=normalize)
-  if ("CLOSENESS" %in% node_traits)
+  }
+  if ("CLOSENESS" %in% node_traits) {
     data$closeness <- get_centrality_scores(graph, "CLOSENESS", normalize=normalize)
-  if ("EIGENVECTOR" %in% node_traits)
+  }
+  if ("EIGENVECTOR" %in% node_traits) {
     data$eigenvector <- get_centrality_scores(graph, "EIGENVECTOR", normalize=normalize)
-  if ("ECCENTRICITY" %in% node_traits)
+  }
+  if ("ECCENTRICITY" %in% node_traits) {
     data$eccentricity <- get_centrality_scores(graph, "ECCENTRICITY", normalize=normalize)
+  }
   if (verbose) {
     print("Computing node heuristic traits...")
   }
@@ -79,6 +83,33 @@ get_graph_traits <- function(graph, normalize=FALSE,
   }
   if ("COLLECTIVE_INFLUENCE" %in% node_traits) {
     data$ci <- sapply(V(graph), function(x) { collective_influence(graph, neighborhood_distance=2, x) })
+  }
+  if (verbose) {
+    print("Computing adaptive centrality traits...")
+  }
+  if ("ADAPTIVE_DEGREE" %in% node_traits) {
+    data$a_degree <- get_adaptive_rank(graph, ranking_method="DEGREE")
+  }
+  if ("ADAPTIVE_BETWEENNESS" %in% node_traits) {
+    data$a_betweenness <- get_adaptive_rank(graph, ranking_method="BETWEENNESS")
+  }
+  if ("ADAPTIVE_CLOSENESS" %in% node_traits) {
+    data$a_closeness <- get_adaptive_rank(graph, ranking_method="CLOSENESS")
+  }
+  if ("ADAPTIVE_EIGENVECTOR" %in% node_traits) {
+    data$a_eigenvector <- get_adaptive_rank(graph, ranking_method="EIGENVECTOR")
+  }
+  if ("ADAPTIVE_ECCENTRICITY" %in% node_traits) {
+    data$a_eccentricity <- get_adaptive_rank(graph, ranking_method="ECCENTRICITY")
+  }
+  if ("ADAPTIVE_CORENESS" %in% node_traits) {
+    data$a_coreness <- get_adaptive_rank(graph, ranking_method="CORENESS")
+  }
+  if ("ADAPTIVE_PAGERANK" %in% node_traits) {
+    data$a_pagerank <- get_adaptive_rank(graph, ranking_method="PAGERANK")
+  }
+  if ("ADAPTIVE_COLLECTIVE_INFLUENCE" %in% node_traits) {
+    data$a_ci <- get_adaptive_rank(graph, ranking_method="COLLECTIVE_INFLUENCE")
   }
   if (verbose) {
     print("Computing graph traits...")
@@ -381,6 +412,7 @@ get_adaptive_rank <- function(graph, ranking_method=c("DEGREE", "BETWEENNESS", "
     } else if (ranking_method == "COLLECTIVE_INFLUENCE") {
       param <- sapply(V(graph), function(x) { collective_influence(graph, neighborhood_distance=2, x) })
     }
+    max_nodes <- NULL
     max_nodes <- which.max(param)
     V(g)[V(g)$name == V(graph)[max_nodes]$name]$rank <- current_rank
     graph <- delete.vertices(graph, max_nodes)
