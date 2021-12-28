@@ -26,3 +26,10 @@ object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. E
 \description{
 Returns the most influential nodes in a graph using centrality-based heuristics
 }
+\references{
+{
+Harary, F., Norman, R. Z., & Cartwright, D. (1965). Structural models: An introduction to the theory of directed graphs. Wiley.;
+Freeman, L. C. (1977). A set of measures of centrality based on betweenness. Sociometry, 35-41.;
+Freeman, L. C. (1978). Centrality in social networks conceptual clarification. Social networks, 1(3), 215-239.
+}
+}

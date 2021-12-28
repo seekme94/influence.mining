@@ -23,3 +23,6 @@ object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. E
 \description{
 Returns the most influential nodes in a graph using Coreness heuristic
 }
+\references{
+Zhang, X., Zhu, J., Wang, Q., & Zhao, H. (2013). Identifying influential nodes in complex networks with community structure. Knowledge-Based Systems, 42.
+}

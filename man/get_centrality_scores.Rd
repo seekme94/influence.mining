@@ -6,9 +6,19 @@
 \usage{
 get_centrality_scores(
   graph,
-  centrality_method = c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR",
-    "ECCENTRICITY"),
-  normalize = FALSE
+  centrality_method = c("DEGREE", "ECCENTRICITY", "AVERAGE_DISTANCE", "BARYCENTER",
+    "BETWEENNESS", "BOTTLENECK", "CENTROID", "CLOSENESS", "CLUSTERRANK",
+    "COMMUNITY_BETWEENNESS", "COMMUNITY_CENTRALITY", "CROSS_CLIQUE",
+    "CURRENTFLOW_CLOSENESS", "DECAY", "EDGE_PERCOLATION", "EIGENVECTOR", "ENTROPY",
+    "FREEMAN_CLOSENESS", "GEODESIC_K_PATH", "HUBBELL", "KATZ", "LAPLACIAN",
+    "LATORA_CLOSENESS", "LEADERRANK", "LEVERAGE", "LINCENT", "LOBBY", "MARKOV",
+    "MAX_NEIGHBORHOOD_COMPONENT", "MAX_NEIGHBORHOOD_DENSITY", "PAIRWISE_DISCONNECTIVITY",
+         "RADIALITY", "RESIDUAL_CLOSENESS", "SALSA", "SEMILOCAL",
+    "TOPOLOGICAL_COEFFICIENT", "VITALITY_CLOSENESS"),
+  normalize = FALSE,
+  estimate = FALSE,
+  cutoff = 0,
+  mode = "all"
 )
 }
 \arguments{
@@ -17,6 +27,10 @@ get_centrality_scores(
 \item{centrality_method}{defines the centrality method to be used. Value must be: "DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY"}
 
 \item{normalize}{scales the values in the output vector between 0 and 1}
+
+\item{estimate}{uses estimated method when true (should be used on large graphs). FALSE by default}
+
+\item{cutoff}{max value of path length as cutoff when estimate is TRUE. E.g. in betweenness, the calculation will be only till the path length of 3 if the cutoff = 3}
 }
 \value{
 vector of centrality scores
@@ -32,5 +46,6 @@ get_centrality_scores(graph, centrality_method="BETWEENNESS")
 get_centrality_scores(graph, centrality_method="CLOSENESS")
 get_centrality_scores(graph, centrality_method="EIGENVECTOR")
 get_centrality_scores(graph, centrality_method="ECCENTRICITY")
+get_centrality_scores(graph, centrality_method="BETWEENNESS", TRUE, 3)
 }
 }

@@ -23,3 +23,6 @@ object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. E
 \description{
 Returns the most influential nodes in a graph using Pagerank heuristic
 }
+\references{
+Page, L., Brin, S., Motwani, R., & Winograd, T. (1999). The PageRank Citation Ranking: Bringing Order to the Web.
+}

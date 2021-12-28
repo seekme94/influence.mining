@@ -4,16 +4,14 @@
 \alias{greedy_influential}
 \title{Implements Greedy algorithm for Influence Maximization}
 \usage{
-greedy_influential(graph, budget, steps, prob = 0.5, test_method)
+greedy_influential(graph, budget, prob = 0.5, test_method)
 }
 \arguments{
 \item{graph}{is the igraph object}
 
 \item{budget}{number of influential nodes to be fetched. Default value is 1}
 
-\item{steps}{is the time steps for which, the diffusion process should run. If exhaustive run is required, provide a high value (like 100). Default value is 1}
-
-\item{prob}{is the probability of activation of a neighbour node. Default is 0.5}
+\item{prob}{probability at which a node influences its neighbours. In case of INFLUENCE_LT, this is becomes the threshold value. Default is 0.5}
 
 \item{test_method}{specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"}
 }
@@ -24,5 +22,8 @@ output containing summary
 Implements Greedy algorithm for Influence Maximization
 }
 \examples{
-{greedy_influential(erdos.renyi.game(500, 0.005), budget=5, steps=99, prob=0.5, "RESILIENCE")}
+{greedy_influential(erdos.renyi.game(500, 0.005), budget=5, prob=0.5, "RESILIENCE")}
+}
+\references{
+Kempe, D., Kleinberg, J., & Tardos, É. (2003). Maximizing the Spread of Influence through a Social Network. Proceedings of the Ninth ACM SIGKDD International Conference on Knowledge Discovery and Data Mining - KDD ’03, 137.
 }

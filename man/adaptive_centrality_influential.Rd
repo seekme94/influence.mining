@@ -26,3 +26,6 @@ object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. E
 \description{
 Returns the most influential nodes in a graph using adaptive centrality-based heuristics
 }
+\references{
+Lipton, R. J., & Naughton, J. F. (1989). Estimating the size of generalized transitive closures. In Proceedings of the 15th Int. Conf. on Very Large Data Bases.
+}

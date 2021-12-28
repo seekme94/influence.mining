@@ -46,7 +46,19 @@ graph_summary <- function(graph, plot=FALSE) {
 #' @export
 get_graph_traits <- function(graph, normalize=FALSE,
     graph_traits=c("SIZE", "EDGES", "AVERAGE_DEGREE", "MAX_DEGREE", "AVERAGE_PATH_LENGTH", "CLUSTERING_COEFFICIENT", "DIAMETER", "DENSITY", "ASSORTATIVITY", "AVERAGE_DISTANCE", "TRIADS", "GIRTH"),
-    node_traits=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY", "CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE", "ADAPTIVE_DEGREE", "ADAPTIVE_BETWEENNESS", "ADAPTIVE_CLOSENESS", "ADAPTIVE_EIGENVALUE", "ADAPTIVE_ECCENTRICITY", "ADAPTIVE_CORENESS", "ADAPTIVE_PAGERANK", "ADAPTIVE_COLLECTIVE_INFLUENCE"), verbose=FALSE) {
+    node_traits=c("AVERAGE_DISTANCE", "BARYCENTER", "BETWEENNESS", "BOTTLENECK", "CENTROID", "CLOSENESS", "CLUSTERRANK", "COMMUNITY_BETWEENNESS",
+                  "COMMUNITY_CENTRALITY", "CROSS_CLIQUE", "CURRENTFLOW_CLOSENESS", "DECAY", "EDGE_PERCOLATION", "EIGENVECTOR", "ENTROPY",
+                  "FREEMAN_CLOSENESS", "GEODESIC_K_PATH", "HUBBELL", "KATZ", "LAPLACIAN", "LATORA_CLOSENESS", "LEADERRANK", "LEVERAGE", "LINCENT",
+                  "LOBBY", "MARKOV", "MAX_NEIGHBORHOOD_COMPONENT", "MAX_NEIGHBORHOOD_DENSITY", "PAIRWISE_DISCONNECTIVITY", "RADIALITY",
+                  "RESIDUAL_CLOSENESS", "SALSA", "SEMILOCAL", "TOPOLOGICAL_COEFFICIENT", "VITALITY_CLOSENESS", "CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE",
+                  "ADAPTIVE_AVERAGE_DISTANCE", "ADAPTIVE_BARYCENTER", "ADAPTIVE_BETWEENNESS", "ADAPTIVE_BOTTLENECK", "ADAPTIVE_CENTROID", "ADAPTIVE_CLOSENESS",
+                  "ADAPTIVE_CLUSTERRANK", "ADAPTIVE_COMMUNITY_BETWEENNESS", "COMMUNITY_CENTRALITY", "ADAPTIVE_CROSS_CLIQUE", "ADAPTIVE_CURRENTFLOW_CLOSENESS",
+                  "ADAPTIVE_DECAY", "ADAPTIVE_EDGE_PERCOLATION", "ADAPTIVE_EIGENVECTOR", "ADAPTIVE_ENTROPY", "FREEMAN_CLOSENESS", "ADAPTIVE_GEODESIC_K_PATH",
+                  "ADAPTIVE_HUBBELL", "ADAPTIVE_KATZ", "ADAPTIVE_LAPLACIAN", "ADAPTIVE_LATORA_CLOSENESS", "ADAPTIVE_LEADERRANK", "ADAPTIVE_LEVERAGE",
+                  "ADAPTIVE_LINCENT", "LOBBY", "ADAPTIVE_MARKOV", "ADAPTIVE_MAX_NEIGHBORHOOD_COMPONENT", "ADAPTIVE_MAX_NEIGHBORHOOD_DENSITY",
+                  "ADAPTIVE_PAIRWISE_DISCONNECTIVITY", "ADAPTIVE_RADIALITY", "RESIDUAL_CLOSENESS", "ADAPTIVE_SALSA", "ADAPTIVE_SEMILOCAL",
+                  "ADAPTIVE_TOPOLOGICAL_COEFFICIENT", "ADAPTIVE_VITALITY_CLOSENESS", "ADAPTIVE_CORENESS", "ADAPTIVE_PAGERANK", "ADAPTIVE_COLLECTIVE_INFLUENCE"),
+                  mode="all", verbose=FALSE) {
   # First, fetch all the node traits
   if (verbose) {
     print("Computing centrality traits...")
@@ -54,66 +66,44 @@ get_graph_traits <- function(graph, normalize=FALSE,
   data <- NULL
   data$name <- 1:vcount(graph) - 1
   data$degree <- get_centrality_scores(graph, "DEGREE", normalize=normalize)
-  if ("BETWEENNESS" %in% node_traits) {
-    data$betweenness <- get_centrality_scores(graph, "BETWEENNESS", normalize=normalize)
+
+  if (verbose)
+    print("Computing node centrality traits...")
+  for (trait in node_traits) {
+    if (!trait %in% c("CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE", "ADAPTIVE_CORENESS", "ADAPTIVE_PAGERANK", "ADAPTIVE_COLLECTIVE_INFLUENCE")) {
+      # Separate out adaptive variant
+      if (startsWith(trait, "ADAPTIVE")) {
+        name <- paste0("adaptive_", tolower(trait))
+        if (verbose)
+          print(paste("Computing adaptive centrality trait", trait))
+        data[, name] <- get_adaptive_rank(graph, ranking_method=trait, mode=mode)
+      } else {
+        data[, tolower(trait)] <- get_centrality_scores(graph, trait, normalize=normalize)
+      }
+    }
   }
-  if ("CLOSENESS" %in% node_traits) {
-    data$closeness <- get_centrality_scores(graph, "CLOSENESS", normalize=normalize)
-  }
-  if ("EIGENVECTOR" %in% node_traits) {
-    data$eigenvector <- get_centrality_scores(graph, "EIGENVECTOR", normalize=normalize)
-  }
-  if ("ECCENTRICITY" %in% node_traits) {
-    data$eccentricity <- get_centrality_scores(graph, "ECCENTRICITY", normalize=normalize)
-  }
-  if (verbose) {
+  if (verbose)
     print("Computing node heuristic traits...")
-  }
   if ("CORENESS" %in% node_traits) {
     data$coreness <- coreness(graph)
-    if (normalize) {
+    if (normalize)
       data$coreness <- normalize_trait(data$coreness)
-    }
   }
   if ("PAGERANK" %in% node_traits) {
     data$pagerank <- page_rank(graph)$vector
-    if (normalize) {
+    if (normalize)
       data$pagerank <- normalize_trait(data$pagerank)
-    }
   }
-  if ("COLLECTIVE_INFLUENCE" %in% node_traits) {
+  if ("COLLECTIVE_INFLUENCE" %in% node_traits)
     data$ci <- sapply(V(graph), function(x) { collective_influence(graph, neighborhood_distance=2, x) })
-  }
-  if (verbose) {
-    print("Computing adaptive centrality traits...")
-  }
-  if ("ADAPTIVE_DEGREE" %in% node_traits) {
-    data$a_degree <- get_adaptive_rank(graph, ranking_method="DEGREE")
-  }
-  if ("ADAPTIVE_BETWEENNESS" %in% node_traits) {
-    data$a_betweenness <- get_adaptive_rank(graph, ranking_method="BETWEENNESS")
-  }
-  if ("ADAPTIVE_CLOSENESS" %in% node_traits) {
-    data$a_closeness <- get_adaptive_rank(graph, ranking_method="CLOSENESS")
-  }
-  if ("ADAPTIVE_EIGENVECTOR" %in% node_traits) {
-    data$a_eigenvector <- get_adaptive_rank(graph, ranking_method="EIGENVECTOR")
-  }
-  if ("ADAPTIVE_ECCENTRICITY" %in% node_traits) {
-    data$a_eccentricity <- get_adaptive_rank(graph, ranking_method="ECCENTRICITY")
-  }
-  if ("ADAPTIVE_CORENESS" %in% node_traits) {
+  if ("ADAPTIVE_CORENESS" %in% node_traits)
     data$a_coreness <- get_adaptive_rank(graph, ranking_method="CORENESS")
-  }
-  if ("ADAPTIVE_PAGERANK" %in% node_traits) {
+  if ("ADAPTIVE_PAGERANK" %in% node_traits)
     data$a_pagerank <- get_adaptive_rank(graph, ranking_method="PAGERANK")
-  }
-  if ("ADAPTIVE_COLLECTIVE_INFLUENCE" %in% node_traits) {
+  if ("ADAPTIVE_COLLECTIVE_INFLUENCE" %in% node_traits)
     data$a_ci <- get_adaptive_rank(graph, ranking_method="COLLECTIVE_INFLUENCE")
-  }
-  if (verbose) {
+  if (verbose)
     print("Computing graph traits...")
-  }
   if ("SIZE" %in% graph_traits)
     data$graph_size <- vcount(graph)
   if ("EDGES" %in% graph_traits)
@@ -346,8 +336,10 @@ largest_component <- function(graph) {
 #' @title Returns the centrality values of nodes in a graph using given method
 #' @name get_centrality_scores
 #' @param graph is the igraph object
-#' @param centrality_method defines the centrality method to be used. Value must be: "DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY"
+#' @param centrality_method defines the centrality method to be used. Value must be among the values specificed in parameter centrality_method
 #' @param normalize scales the values in the output vector between 0 and 1
+#' @param estimate uses estimated method when true (should be used on large graphs). FALSE by default
+#' @param cutoff max value of path length as cutoff when estimate is TRUE. E.g. in betweenness, the calculation will be only till the path length of 3 if the cutoff = 3
 #' @return vector of centrality scores
 #' @import igraph
 #' @examples {
@@ -357,29 +349,150 @@ largest_component <- function(graph) {
 #' get_centrality_scores(graph, centrality_method="CLOSENESS")
 #' get_centrality_scores(graph, centrality_method="EIGENVECTOR")
 #' get_centrality_scores(graph, centrality_method="ECCENTRICITY")
+#' get_centrality_scores(graph, centrality_method="BETWEENNESS", TRUE, 3)
 #' }
 #' @export
-get_centrality_scores <- function(graph, centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY"), normalize=FALSE) {
+get_centrality_scores <- function(graph, centrality_method=c("DEGREE", "ECCENTRICITY", "AVERAGE_DISTANCE", "BARYCENTER", "BETWEENNESS", "BOTTLENECK",
+                                                      "CENTROID", "CLOSENESS", "CLUSTERRANK", "COMMUNITY_BETWEENNESS", "COMMUNITY_CENTRALITY",
+                                                      "CROSS_CLIQUE", "CURRENTFLOW_CLOSENESS", "DECAY", "EDGE_PERCOLATION", "EIGENVECTOR", "ENTROPY",
+                                                      "FREEMAN_CLOSENESS", "GEODESIC_K_PATH", "HUBBELL", "KATZ", "LAPLACIAN", "LATORA_CLOSENESS",
+                                                      "LEADERRANK", "LEVERAGE", "LINCENT", "LOBBY", "MARKOV", "MAX_NEIGHBORHOOD_COMPONENT",
+                                                      "MAX_NEIGHBORHOOD_DENSITY", "PAIRWISE_DISCONNECTIVITY", "RADIALITY", "RESIDUAL_CLOSENESS",
+                                                      "SALSA", "SEMILOCAL", "TOPOLOGICAL_COEFFICIENT", "VITALITY_CLOSENESS"),
+                                  normalize=FALSE, estimate=FALSE, cutoff=0, mode="all") {
   x <- NULL
   if (centrality_method == "DEGREE") {
     # Calculate in/out degrees of all nodes
-    x <- degree(graph, V(graph), mode="all", loops=FALSE, normalized=FALSE)
+    x <- degree(graph, V(graph), mode=mode, loops=FALSE)
   }
   else if(centrality_method == "BETWEENNESS") {
-    # Calculate betweenness centrality (TODO: for huge data sets, use betweenness.estimate() and give some max value of path length as cutoff)
-    x <- betweenness(graph, V(graph), directed=FALSE)
+    # Calculate betweenness centrality. For large datasets, use betweenness.estimate() with max value of path length (cutoff) relative to the size of graph
+    if (estimate) {
+      x <- betweenness.estimate(graph, V(graph), cutoff=cutoff)
+    } else {
+      x <- betweenness(graph, V(graph))
+    }
   }
   else if (centrality_method == "CLOSENESS") {
-    # Calculate in/out closeness of all nodes
-    x <- closeness(graph, V(graph), mode="all", normalized=FALSE)
+    # Calculate in/out closeness of all nodes. For large datasets, use closeness.estimate() with max value of path length (cutoff) relative to the size of graph
+    if (estimate) {
+      x <- closeness.estimate(graph, V(graph), mode=mode, cutoff=cutoff)
+    } else {
+      x <- closeness(graph, V(graph), mode=mode)
+    }
   }
   else if (centrality_method == "EIGENVECTOR") {
     # Calculate eigenvectors of the graph
-    eigen <- evcent(graph, directed=FALSE)
+    eigen <- evcent(graph)
     x <- eigen$vector
   }
   else if (centrality_method == "ECCENTRICITY") {
-    x <- eccentricity(graph, mode="all")
+    x <- eccentricity(graph, mode=mode)
+  }
+  # Added from library "centiverse"
+  else if (centrality_method == "AVERAGE_DISTANCE") {
+    x <- averagedis(graph, mode=mode)
+  }
+  else if (centrality_method == "BARYCENTER") {
+    x <- barycenter(graph, mode=mode)
+  }
+  else if (centrality_method == "BOTTLENECK") {
+    x <- bottleneck(graph, mode=mode)
+  }
+  else if (centrality_method == "CENTROID") {
+    x <- centroid(graph, mode=mode)
+  }
+  else if (centrality_method == "CLUSTERRANK") {
+    x <- clusterrank(graph)
+  }
+  else if (centrality_method == "COMMUNITY_BETWEENNESS") {
+    x <- communibet(graph)
+  }
+  else if (centrality_method == "COMMUNITY_CENTRALITY") {
+    x <- communitycent(graph)
+  }
+  else if (centrality_method == "CROSS_CLIQUE") {
+    x <- crossclique(graph)
+  }
+  else if (centrality_method == "CURRENTFLOW_CLOSENESS") {
+    x <- closeness.currentflow(graph)
+  }
+  else if (centrality_method == "DECAY") {
+    x <- decay(graph, mode=mode)
+  }
+  else if (centrality_method == "EDGE_PERCOLATION") {
+    x <- epc(graph)
+  }
+  else if (centrality_method == "ENTROPY") {
+    x <- entropy(graph, mode=mode)
+  }
+  else if (centrality_method == "FREEMAN_CLOSENESS") {
+    x <- closeness.freeman(graph, mode=mode)
+  }
+  else if (centrality_method == "GEODESIC_K_PATH") {
+    x <- geokpath(graph, mode=mode)
+  }
+  else if (centrality_method == "HUBBELL") {
+    x <- hubbell(graph)
+  }
+  else if (centrality_method == "KATZ") {
+    x <- katzcent(graph, alpha=0.1)
+  }
+  else if (centrality_method == "LAPLACIAN") {
+    x <- laplacian(graph)
+  }
+  else if (centrality_method == "LATORA_CLOSENESS") {
+    x <- closeness.latora(graph, mode=mode)
+  }
+  else if (centrality_method == "LEADERRANK") {
+    if (is_directed(graph)) {
+      x <- leaderrank(graph)
+    } else {
+      x
+    }
+  }
+  else if (centrality_method == "LEVERAGE") {
+    x <- leverage(graph, mode=mode)
+  }
+  else if (centrality_method == "LINCENT") {
+    x <- lincent(graph, mode=mode)
+  }
+  else if (centrality_method == "LOBBY") {
+    x <- lobby(graph, mode=mode)
+  }
+  else if (centrality_method == "MARKOV") {
+    x <- markovcent(graph)
+  }
+  else if (centrality_method == "MAX_NEIGHBORHOOD_COMPONENT") {
+    x <- mnc(graph, mode=mode)
+  }
+  else if (centrality_method == "MAX_NEIGHBORHOOD_DENSITY") {
+    x <- dmnc(graph, mode=mode)
+  }
+  else if (centrality_method == "PAIRWISE_DISCONNECTIVITY") {
+    if (is_directed(graph)) {
+      x <- pairwisedis(graph)
+    } else {
+      x
+    }
+  }
+  else if (centrality_method == "RADIALITY") {
+    x <- radiality(graph, mode=mode)
+  }
+  else if (centrality_method == "RESIDUAL_CLOSENESS") {
+    x <- closeness.residual(graph, mode=mode)
+  }
+  else if (centrality_method == "SALSA") {
+    x <- salsa(graph)
+  }
+  else if (centrality_method == "SEMILOCAL") {
+    x <- semilocal(graph, mode=mode)
+  }
+  else if (centrality_method == "TOPOLOGICAL_COEFFICIENT") {
+    x <- topocoefficient(graph)
+  }
+  else if (centrality_method == "VITALITY_CLOSENESS") {
+    x <- closeness.vitality(graph, mode=mode)
   }
   if (normalize) {
     normalize_trait(x)
@@ -394,7 +507,13 @@ get_centrality_scores <- function(graph, centrality_method=c("DEGREE", "BETWEENN
 #' @return vector of ranks
 #' @import igraph
 #' @export
-get_adaptive_rank <- function(graph, ranking_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY", "CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE")) {
+get_adaptive_rank <- function(graph, ranking_method=c("CORENESS", "PAGERANK", "COLLECTIVE_INFLUENCE", "DEGREE", "ECCENTRICITY", "AVERAGE_DISTANCE",
+                                                      "BARYCENTER", "BETWEENNESS", "BOTTLENECK", "CENTROID", "CLOSENESS", "CLUSTERRANK",
+                                                      "COMMUNITY_BETWEENNESS", "COMMUNITY_CENTRALITY", "CROSS_CLIQUE", "CURRENTFLOW_CLOSENESS", "DECAY", "EDGE_PERCOLATION", "EIGENVECTOR", "ENTROPY",
+                                                      "FREEMAN_CLOSENESS", "GEODESIC_K_PATH", "HUBBELL", "KATZ", "LAPLACIAN", "LATORA_CLOSENESS",
+                                                      "LEADERRANK", "LEVERAGE", "LINCENT", "LOBBY", "MARKOV", "MAX_NEIGHBORHOOD_COMPONENT",
+                                                      "MAX_NEIGHBORHOOD_DENSITY", "PAIRWISE_DISCONNECTIVITY", "RADIALITY", "RESIDUAL_CLOSENESS",
+                                                      "SALSA", "SEMILOCAL", "TOPOLOGICAL_COEFFICIENT", "VITALITY_CLOSENESS"), mode="all") {
   g <- graph
   V(g)$name <- V(graph)
   V(g)$rank <- -1
@@ -403,14 +522,14 @@ get_adaptive_rank <- function(graph, ranking_method=c("DEGREE", "BETWEENNESS", "
   while (TRUE) {
     graph <- largest_component(graph)
     param <- 0
-    if (ranking_method %in% c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY")) {
-      param <- get_centrality_scores(graph, centrality_method=ranking_method)
-    } else if (ranking_method == "CORENESS") {
-      param <- graph.coreness(graph, mode="all")
+    if (ranking_method == "CORENESS") {
+      param <- graph.coreness(graph, mode=mode)
     } else if (ranking_method == "PAGERANK") {
       param <- page_rank(graph, directed=TRUE)$vector
     } else if (ranking_method == "COLLECTIVE_INFLUENCE") {
       param <- sapply(V(graph), function(x) { collective_influence(graph, neighborhood_distance=2, x) })
+    } else {
+      param <- get_centrality_scores(graph, centrality_method=ranking_method, mode=mode)
     }
     max_nodes <- NULL
     max_nodes <- which.max(param)
@@ -430,10 +549,7 @@ get_adaptive_rank <- function(graph, ranking_method=c("DEGREE", "BETWEENNESS", "
 #' @param graph is the weighted igraph object
 #' @param nodes is a set of nodes to check resilience of
 #' @return number of remaining nodes in largest connected component after removing nodes
-#' @examples {
-#' graph <- erdos.renyi.game(500, 0.005)
-#' resilience(graph, nodes=V(graph)[c(2,5,9,23)])
-#' }
+#' @examples {resilience(erdos.renyi.game(500, 0.005), nodes=V(graph)[c(2,5,9,23)])}
 #' @import igraph
 #' @export
 resilience <- function (graph, nodes) {
@@ -441,3 +557,4 @@ resilience <- function (graph, nodes) {
   graph <- largest_component(graph)
   vcount(graph)
 }
+

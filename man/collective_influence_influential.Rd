@@ -23,3 +23,6 @@ object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. E
 \description{
 Returns the most influential nodes in a graph using Collective influence heuristic
 }
+\references{
+Morone, F., & Makse, H. a. (2015). Influence maximization in complex networks through optimal percolation: supplementary information. Current Science, 93(1), 17–19.
+}

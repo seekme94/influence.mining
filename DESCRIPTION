@@ -1,7 +1,7 @@
 Package: influence.mining
 Type: Package
 Title: Provides various methods for influence mining on Graphs
-Version: 0.2.4
+Version: 0.2.5
 Authors@R: person(given = "Owais",
            family = "Hussain",
            role = c("aut", "cre"),
@@ -18,6 +18,6 @@ Depends:
     R (>= 3.1.0),
     igraph (>= 1.2.1)
 Imports:
-    stats,e1071,caret,uuid,jsonlite,graphics,utils,logging,iterpc,foreach,parallel
+    stats,e1071,caret,uuid,jsonlite,graphics,utils,logging,iterpc,foreach,parallel,centiserve,expm,linkcomm
 Suggests:
     knitr,devtools,roxygen2,testthat,RMySQL,snow,doSNOW

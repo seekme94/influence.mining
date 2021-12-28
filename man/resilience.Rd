@@ -18,8 +18,5 @@ number of remaining nodes in largest connected component after removing nodes
 Calculates resilience of network
 }
 \examples{
-{
-graph <- erdos.renyi.game(500, 0.005)
-resilience(graph, nodes=V(graph)[c(2,5,9,23)])
-}
+{resilience(erdos.renyi.game(500, 0.005), nodes=V(graph)[c(2,5,9,23)])}
 }

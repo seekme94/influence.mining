@@ -17,7 +17,7 @@ optimal_influential(
 
 \item{budget}{number of influential nodes to be fetched. Default value is 1}
 
-\item{prob}{probability at which a node influences its neighbours}
+\item{prob}{probability at which a node influences its neighbours. In case of INFLUENCE_LT, this is becomes the threshold value. Default is 0.5}
 
 \item{test_method}{specifies the method to measure influence. Value MUST be "RESILIENCE", "INFLUENCE_IC" or "INFLUENCE_LT"}
 
@@ -28,4 +28,7 @@ object containing: 1. Vector of influential nodes. 2. Measure of influence. 3. E
 }
 \description{
 Implements optimal algorithm for Influence Maximization
+}
+\references{
+Kempe, D., Kleinberg, J., & Tardos, É. (2003). Maximizing the Spread of Influence through a Social Network. Proceedings of the Ninth ACM SIGKDD International Conference on Knowledge Discovery and Data Mining - KDD ’03, 137.
 }
