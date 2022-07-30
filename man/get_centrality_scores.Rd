@@ -24,7 +24,7 @@ get_centrality_scores(
 \arguments{
 \item{graph}{is the igraph object}
 
-\item{centrality_method}{defines the centrality method to be used. Value must be: "DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR", "ECCENTRICITY"}
+\item{centrality_method}{defines the centrality method to be used. Value must be among the values specificed in parameter centrality_method}
 
 \item{normalize}{scales the values in the output vector between 0 and 1}
 

@@ -28,7 +28,13 @@ setup <- function(logging=TRUE) {
 influence <- function(graph, budget=1, prob=0.5, steps=1, optimal_solution=FALSE,
                       test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
                       heuristic=c("GREEDY", "PAGERANK", "COLLECTIVE_INFLUENCE", "CORENESS", "CENTRALITY", "ADAPTIVE_CENTRALITY"),
-                      centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR"),
+                      centrality_method=c("DEGREE", "ECCENTRICITY", "AVERAGE_DISTANCE", "BARYCENTER", "BETWEENNESS", "BOTTLENECK",
+                                          "CENTROID", "CLOSENESS", "CLUSTERRANK", "COMMUNITY_BETWEENNESS", "COMMUNITY_CENTRALITY",
+                                          "CROSS_CLIQUE", "CURRENTFLOW_CLOSENESS", "DECAY", "EDGE_PERCOLATION", "EIGENVECTOR", "ENTROPY",
+                                          "FREEMAN_CLOSENESS", "GEODESIC_K_PATH", "HUBBELL", "KATZ", "LAPLACIAN", "LATORA_CLOSENESS",
+                                          "LEADERRANK", "LEVERAGE", "LINCENT", "LOBBY", "MARKOV", "MAX_NEIGHBORHOOD_COMPONENT",
+                                          "MAX_NEIGHBORHOOD_DENSITY", "PAIRWISE_DISCONNECTIVITY", "RADIALITY", "RESIDUAL_CLOSENESS",
+                                          "SALSA", "SEMILOCAL", "TOPOLOGICAL_COEFFICIENT", "VITALITY_CLOSENESS"),
                       parallel=TRUE, logging=TRUE) {
   output <- NULL
   if (logging) {
@@ -69,11 +75,17 @@ influence <- function(graph, budget=1, prob=0.5, steps=1, optimal_solution=FALSE
 #' @export
 #' @references Lipton, R. J., & Naughton, J. F. (1989). Estimating the size of generalized transitive closures. In Proceedings of the 15th Int. Conf. on Very Large Data Bases.
 adaptive_centrality_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
-                                   centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR")) {
+                                   centrality_method=c("DEGREE", "ECCENTRICITY", "AVERAGE_DISTANCE", "BARYCENTER", "BETWEENNESS", "BOTTLENECK",
+                                                       "CENTROID", "CLOSENESS", "CLUSTERRANK", "COMMUNITY_BETWEENNESS", "COMMUNITY_CENTRALITY",
+                                                       "CROSS_CLIQUE", "CURRENTFLOW_CLOSENESS", "DECAY", "EDGE_PERCOLATION", "EIGENVECTOR", "ENTROPY",
+                                                       "FREEMAN_CLOSENESS", "GEODESIC_K_PATH", "HUBBELL", "KATZ", "LAPLACIAN", "LATORA_CLOSENESS",
+                                                       "LEADERRANK", "LEVERAGE", "LINCENT", "LOBBY", "MARKOV", "MAX_NEIGHBORHOOD_COMPONENT",
+                                                       "MAX_NEIGHBORHOOD_DENSITY", "PAIRWISE_DISCONNECTIVITY", "RADIALITY", "RESIDUAL_CLOSENESS",
+                                                       "SALSA", "SEMILOCAL", "TOPOLOGICAL_COEFFICIENT", "VITALITY_CLOSENESS")) {
   start <- as.numeric(Sys.time())
   # Preserve original graph as this object will be overwritten
-  g <- graph
   V(graph)$name <- V(graph)
+  g <- graph
   influential_nodes <- NULL
   # Calculate the actual number of nodes to select
   for (i in 1:budget) {
@@ -110,7 +122,13 @@ adaptive_centrality_influential <- function(graph, budget=1, test_method=c("RESI
 #' Freeman, L. C. (1978). Centrality in social networks conceptual clarification. Social networks, 1(3), 215-239.
 #' }
 centrality_influential <- function(graph, budget=1, test_method=c("RESILIENCE", "INFLUENCE_LT", "INFLUENCE_IC"),
-                                   centrality_method=c("DEGREE", "BETWEENNESS", "CLOSENESS", "EIGENVECTOR")) {
+                                   centrality_method=c("DEGREE", "ECCENTRICITY", "AVERAGE_DISTANCE", "BARYCENTER", "BETWEENNESS", "BOTTLENECK",
+                                                       "CENTROID", "CLOSENESS", "CLUSTERRANK", "COMMUNITY_BETWEENNESS", "COMMUNITY_CENTRALITY",
+                                                       "CROSS_CLIQUE", "CURRENTFLOW_CLOSENESS", "DECAY", "EDGE_PERCOLATION", "EIGENVECTOR", "ENTROPY",
+                                                       "FREEMAN_CLOSENESS", "GEODESIC_K_PATH", "HUBBELL", "KATZ", "LAPLACIAN", "LATORA_CLOSENESS",
+                                                       "LEADERRANK", "LEVERAGE", "LINCENT", "LOBBY", "MARKOV", "MAX_NEIGHBORHOOD_COMPONENT",
+                                                       "MAX_NEIGHBORHOOD_DENSITY", "PAIRWISE_DISCONNECTIVITY", "RADIALITY", "RESIDUAL_CLOSENESS",
+                                                       "SALSA", "SEMILOCAL", "TOPOLOGICAL_COEFFICIENT", "VITALITY_CLOSENESS")) {
   start <- as.numeric(Sys.time())
   # Get Collective influence score of all nodes
   centrality <- get_centrality_scores(graph, centrality_method=centrality_method)

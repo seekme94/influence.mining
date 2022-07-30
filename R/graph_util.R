@@ -1,3 +1,40 @@
+#' @title Calculates Katz centrality (Katz Status Index) of network. Original implementation has been modified to escape the invalid alpha value error which happens when a graph is not acyclic
+#'
+#' @name katz_centrality
+#' @description Katz centrality computes the relative influence of a node within a network by measuring the number of the immediate neighbors (first degree nodes) and also all other nodes in the network that connect to the node under consideration through these immediate neighbors
+#' @param graph The input graph as igraph object
+#' @param vids Vertex sequence, the vertices for which the centrality values are returned. Default is all vertices.
+#' @param alpha The alpha parameter, which must be between 0.0-0.2. The default is 0.1.
+#' @return A numeric vector contaning the centrality scores for the selected vertices.
+#' @author Mahdi Jalili \email{m_jalili@@farabi.tums.ac.ir}
+#' @references Junker, Bjorn H., Dirk Koschutzki, and Falk Schreiber. "Exploration of biological network centralities with CentiBiN." BMC bioinformatics 7.1 (2006): 219.
+#' @examples
+#' g <- barabasi.game(20)
+#' katz_centrality(g)
+#' @import igraph
+#' @export
+katz_centrality <- function (graph, alpha = 0.1) {
+  vids <- V(graph)
+  alpha <- as.double(alpha)
+  if (alpha < 0 || alpha > 0.2)
+    stop("Valid alpha is between 0.0-0.2", call. = FALSE)
+  adjacencyMatrix <- as.matrix(get.adjacency(graph, names = FALSE))
+  aMnrow <- nrow(adjacencyMatrix)
+  maxEigenvalue <- (1/eigen(adjacencyMatrix)$values[1])
+  if (alpha <= 0) {
+    stop("Invalid alpha value.", call. = FALSE)
+  }
+  if (alpha >= maxEigenvalue) {
+    alpha <- maxEigenvalue * 0.99
+  }
+  res <- solve(diag(x = 1, nrow = aMnrow) - (alpha * t(adjacencyMatrix))) %*% matrix(1, nrow = aMnrow, ncol = 1)
+  res <- res[, 1]
+  if (getIgraphOpt("add.vertex.names") && is.named(graph)) {
+    names(res) <- V(graph)$name
+  }
+  res[vids]
+}
+
 #' @title Gives a summary of common metrics of given graph
 #' @name graph_summary
 #' @param graph is the igraph object
@@ -63,9 +100,7 @@ get_graph_traits <- function(graph, normalize=FALSE,
   if (verbose) {
     print("Computing centrality traits...")
   }
-  data <- NULL
-  data$name <- 1:vcount(graph) - 1
-  data$degree <- get_centrality_scores(graph, "DEGREE", normalize=normalize)
+  data <- data.frame(name=1:vcount(graph) - 1, degree=get_centrality_scores(graph, "DEGREE", normalize=normalize))
 
   if (verbose)
     print("Computing node centrality traits...")
@@ -436,7 +471,7 @@ get_centrality_scores <- function(graph, centrality_method=c("DEGREE", "ECCENTRI
     x <- hubbell(graph)
   }
   else if (centrality_method == "KATZ") {
-    x <- katzcent(graph, alpha=0.1)
+    x <- katz_centrality(graph, alpha=0.1)
   }
   else if (centrality_method == "LAPLACIAN") {
     x <- laplacian(graph)
